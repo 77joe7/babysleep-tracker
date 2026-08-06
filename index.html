@@ -1,0 +1,4203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>宝宝睡眠 · 豆芽专属</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#FF9A6C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="宝宝睡眠">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<style>
+  /* ============ 设计变量 ============ */
+  :root {
+    --primary: #FF9A6C;
+    --primary-light: #FFB289;
+    --primary-deep: #FF7A47;
+    --bg: #F4ECE3;
+    --bg-dark: #0F0F0F;
+    --card: #FFFFFF;
+    --card-dark: #1C1C1E;
+    --text-primary: #1A1A1A;
+    --text-secondary: rgba(26, 26, 26, 0.6);
+    --text-tertiary: rgba(26, 26, 26, 0.4);
+    --mint: #4FD1C5;
+    --pink: #F8A5C2;
+    --yellow: #FCD34D;
+    --purple: #C4B5FD;
+    --red: #FF6B6B;
+    --shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    --shadow-strong: 0 8px 32px rgba(255, 154, 108, 0.2);
+    --radius-card: 20px;
+    --radius-btn: 16px;
+    --radius-small: 12px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --tab-height: calc(62px + max(20px, var(--safe-bottom)));
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #E8DFD3;
+    color: var(--text-primary);
+    overflow: hidden;
+    user-select: none;
+  }
+
+  button {
+    font-family: inherit;
+    border: none;
+    cursor: pointer;
+    background: none;
+  }
+
+  input, select, textarea { user-select: text; -webkit-user-select: text; }
+
+  /* ============ 手机App外框 ============ */
+  body {
+    display: flex;
+    justify-content: center;
+    background: #000;
+    position: fixed; top: 0; bottom: 0; left: 0; right: 0;
+  }
+  .phone-container {
+    width: 100%;
+    max-width: 430px;
+    height: 100vh;
+    height: 100dvh;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .phone {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .status-bar {
+    height: 54px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 28px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex-shrink: 0;
+  }
+
+  .status-bar .time {
+    font-size: 15px;
+    font-weight: 600;
+    width: 50px;
+  }
+
+  .status-bar .icons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .status-bar .signal {
+    width: 18px; height: 13px;
+    fill: var(--text-primary);
+  }
+
+  .status-bar .wifi {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.5px; margin-right: 2px;
+  }
+
+  .status-bar .battery {
+    width: 27px; height: 14px;
+    fill: var(--text-primary);
+    stroke: var(--text-primary);
+  }
+
+  .notch {
+    display: none;
+  }
+
+  /* 页面区域 */
+  .page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: var(--tab-height);
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    transition: opacity 0.3s, transform 0.3s;
+    background: var(--bg);
+  }
+
+  .status-bar .right {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .notch {
+    width: 126px;
+    height: 32px;
+    background: #1a1a1a;
+    border-radius: 0 0 18px 18px;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+  }
+
+  /* ============ 页面通用 ============ */
+  .page::-webkit-scrollbar { display: none; }
+
+  .page.hidden {
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+  }
+
+  /* ============ TabBar ============ */
+  .tab-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--tab-height);
+    background: #0F0F0F;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    padding: 10px 16px max(20px, var(--safe-bottom));
+    z-index: 100;
+  }
+
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    transition: color 0.2s;
+    flex: 1;
+  }
+
+  .tab-item.active {
+    color: var(--primary);
+  }
+
+  .tab-item .icon {
+    font-size: 24px;
+    line-height: 1;
+  }
+
+  .tab-fab {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FF9A6C 0%, #F8A5C2 100%);
+    box-shadow: 0 8px 24px rgba(255, 154, 108, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 28px;
+    font-weight: 300;
+    margin-top: -16px;
+    transition: transform 0.2s;
+  }
+
+  .tab-fab:active {
+    transform: scale(0.92);
+  }
+
+  /* ============ 引导页 ============ */
+  .page-onboarding {
+    padding: 40px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hero-icon {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #FFB289, #FF9A6C 40%, #F8A5C2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    margin-top: 40px;
+    box-shadow: 0 12px 40px rgba(255, 154, 108, 0.3);
+    position: relative;
+  }
+
+  .hero-icon::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 154, 108, 0.2) 0%, transparent 70%);
+    z-index: -1;
+  }
+
+  .page-onboarding h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-top: 32px;
+    text-align: center;
+  }
+
+  .page-onboarding p {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-top: 12px;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .onboarding-progress {
+    display: flex;
+    gap: 8px;
+    margin-top: 40px;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(26, 26, 26, 0.2);
+  }
+
+  .dot.active {
+    background: var(--primary);
+    width: 24px;
+    border-radius: 4px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #FF9A6C 0%, #FF7A47 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 16px 32px;
+    font-size: 17px;
+    font-weight: 600;
+    width: 100%;
+    margin-top: auto;
+    box-shadow: 0 8px 24px rgba(255, 122, 71, 0.3);
+    transition: transform 0.2s;
+  }
+
+  .btn-primary:active {
+    transform: scale(0.97);
+  }
+
+  .onboarding-form {
+    width: 100%;
+    margin-top: 32px;
+  }
+
+  .form-field {
+    margin-bottom: 20px;
+  }
+
+  .form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .form-input {
+    background: var(--card);
+    border-radius: var(--radius-small);
+    padding: 14px 16px;
+    font-size: 16px;
+    border: 2px solid transparent;
+    transition: border 0.2s;
+    width: 100%;
+    color: var(--text-primary);
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+
+  .option-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    margin-top: 24px;
+  }
+
+  .option-card {
+    background: var(--card);
+    border-radius: var(--radius-small);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+  }
+
+  .option-card.selected {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, rgba(255, 154, 108, 0.08), rgba(248, 165, 194, 0.08));
+  }
+
+  .option-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .option-icon.mint { background: var(--mint); }
+  .option-icon.pink { background: var(--pink); }
+  .option-icon.purple { background: var(--purple); }
+  .option-icon.yellow { background: var(--yellow); }
+
+  /* ============ 时间轴主页 ============ */
+  .page-timeline {
+    padding: 0 20px 20px;
+  }
+
+  /* 时间轴事件区容器：与 summary/hero 等宽 */
+  .timeline-section {
+    padding: 0;
+  }
+
+  .timeline-header {
+    padding: 16px 20px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .timeline-date {
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .timeline-day-tag {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    box-shadow: var(--shadow);
+  }
+
+  .timeline-day-tag strong {
+    color: var(--primary);
+  }
+
+  /* 日期轮播 */
+  .date-carousel {
+    padding: 12px 20px 16px;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .date-carousel::-webkit-scrollbar { display: none; }
+
+  .date-item {
+    flex-shrink: 0;
+    width: 56px;
+    height: 72px;
+    border-radius: 18px;
+    background: var(--card);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    box-shadow: var(--shadow);
+    transition: all 0.2s;
+  }
+
+  .date-item.active {
+    background: #0F0F0F;
+    color: white;
+    transform: scale(1.05);
+  }
+  .date-item.today:not(.active) {
+    border: 1.5px solid var(--primary);
+  }
+
+  .date-item .weekday {
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0.7;
+  }
+
+  .date-item .day {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .date-item .dot-indicator {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--primary);
+    margin-top: 2px;
+  }
+
+  .date-item:not(.active) .dot-indicator {
+    display: none;
+  }
+
+  .timeline-section-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; padding:0 4px; position:relative; z-index:40; }
+  .timeline-section-header .section-title { margin:0; padding:0; }
+  .timeline-filter-wrap { position:relative; }
+  .timeline-filter-button { display:flex; align-items:center; gap:6px; padding:7px 11px; border-radius:13px; background:var(--card); color:var(--text-primary); font-size:12px; font-weight:700; box-shadow:var(--shadow); }
+  .timeline-filter-button.active { background:#1A1A1A; color:white; }
+  .timeline-filter-menu { position:absolute; top:calc(100% + 8px); right:0; width:190px; padding:8px; border-radius:16px; background:var(--card); box-shadow:0 16px 42px rgba(0,0,0,.18); display:none; }
+  .timeline-filter-menu.open { display:block; }
+  .filter-option { display:flex; align-items:center; gap:9px; padding:10px 8px; border-radius:10px; font-size:13px; color:var(--text-primary); }
+  .filter-option:active { background:rgba(26,26,26,.05); }
+  .filter-option input { width:18px; height:18px; accent-color:#4F7FD9; }
+  .filter-option-label { flex:1; }
+  .filter-count { min-width:17px; height:17px; padding:0 4px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; background:rgba(0,0,0,.07); font-size:9px; }
+
+  .timeline-date { cursor: pointer; border-radius: 10px; padding: 3px 6px; margin-left: -6px; }
+  .timeline-date:active { background: rgba(255,255,255,0.55); }
+
+  /* Hero 卡片 */
+  .hero-card {
+    margin: 0 0 20px;
+    background: linear-gradient(135deg, #FF9A6C 0%, #F8A5C2 100%);
+    border-radius: var(--radius-card);
+    padding: 24px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-strong);
+    cursor: pointer;
+    perspective: 1000px;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 168px;
+  }
+
+  .hero-card.sleeping {
+    background: linear-gradient(135deg, #4F7FD9 0%, #6A8FE8 48%, #8DB9F4 100%);
+    box-shadow: 0 10px 34px rgba(62, 105, 190, 0.28);
+  }
+
+  .hero-card-inner {
+    position: relative;
+    width: 100%;
+  }
+  .hero-card-front { display: block; }
+  .hero-card-back {
+    display: none;
+    box-sizing: border-box;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .hero-card.flipped .hero-card-front { display: none; }
+  .hero-card.flipped .hero-card-back { display: flex; }
+  .hero-back-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; opacity: 0.96; }
+  .hero-back-body { font-size: 12px; line-height: 1.6; opacity: 0.92; }
+  .hero-back-body b { font-weight: 700; }
+  .hero-flip-hint {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    font-size: 10px;
+    opacity: 0.75;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  .hero-card::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .hero-card::after {
+    content: '';
+    position: absolute;
+    bottom: -60px;
+    left: -60px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .hero-label {
+    font-size: 13px;
+    opacity: 0.9;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-time {
+    font-size: 42px;
+    font-weight: 700;
+    margin-top: 4px;
+    letter-spacing: -1px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-subtitle {
+    font-size: 14px;
+    opacity: 0.85;
+    margin-top: 6px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-progress {
+    margin-top: 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-progress-bar {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .hero-progress-fill {
+    height: 100%;
+    background: white;
+    border-radius: 3px;
+    transition: width 0.5s;
+  }
+
+  .hero-progress-text {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 11px;
+    opacity: 0.85;
+  }
+
+  /* 今日摘要卡 */
+  .summary-card {
+    margin: 0 0 16px;
+    background: var(--card);
+    border-radius: var(--radius-card);
+    padding: 16px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    box-shadow: var(--shadow);
+  }
+
+  .summary-item {
+    text-align: center;
+  }
+
+  .summary-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin: 0 auto 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: white;
+  }
+
+  .summary-icon.sleep { background: linear-gradient(135deg, var(--primary), var(--primary-light)); }
+  .summary-icon.feed { background: linear-gradient(135deg, var(--purple), #DDD6FE); }
+  .summary-icon.cry { background: linear-gradient(135deg, var(--pink), #FECDD3); }
+  .summary-icon.nap { background: linear-gradient(135deg, var(--mint), #99F6E4); }
+
+  .summary-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .summary-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  /* 时间轴 */
+  .timeline-section {
+    padding: 0 20px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    padding: 0 4px;
+  }
+
+  .timeline {
+    position: relative;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 16px;
+    bottom: 16px;
+    width: 2px;
+    background: rgba(26, 26, 26, 0.08);
+  }
+
+  .timeline-event {
+    position: relative;
+    padding: 8px 0 8px 28px;
+  }
+
+  .timeline-dot {
+    position: absolute;
+    left: 0;
+    top: 14px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 3px solid var(--card);
+    box-shadow: 0 0 0 1px rgba(26, 26, 26, 0.1);
+  }
+
+  .timeline-dot.wake { background: var(--yellow); }
+  .timeline-dot.nap { background: var(--primary); }
+  .timeline-dot.cry { background: var(--pink); }
+  .timeline-dot.feed { background: var(--purple); }
+  .timeline-dot.ritual { background:#8B7ED8; }
+  .timeline-dot.soothe { background:#FB923C; }
+  .event-recorder { display:inline-flex; margin-top:7px; padding:3px 8px; border-radius:9px; background:rgba(79,125,217,.08); color:#4F6FAF; font-size:10px; font-weight:600; }
+
+  .event-row {
+    background: var(--card);
+    border-radius: var(--radius-small);
+    padding: 12px 14px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s;
+  }
+
+  .event-row:active {
+    transform: scale(0.98);
+  }
+
+  .event-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .event-title {
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .event-time {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .event-detail {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .sleep-bar {
+    margin-top: 8px;
+    height: 6px;
+    background: rgba(255, 154, 108, 0.15);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .sleep-bar-fill {
+    position: absolute;
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--pink));
+    border-radius: 3px;
+  }
+
+  .sleep-bar-target {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    width: 2px;
+    background: rgba(26, 26, 26, 0.2);
+  }
+
+  .sleep-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    font-size: 10px;
+    color: var(--text-tertiary);
+  }
+
+  /* ============ 分析页 ============ */
+  .page-analytics {
+    padding-bottom: 20px;
+  }
+
+  .analytics-header {
+    padding: 20px 20px 0;
+  }
+
+  .analytics-title {
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  .analytics-subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  .segment-control {
+    margin: 16px 20px;
+    background: var(--card);
+    border-radius: 14px;
+    padding: 4px;
+    display: flex;
+    box-shadow: var(--shadow);
+  }
+
+  .segment-item {
+    flex: 1;
+    text-align: center;
+    padding: 8px 0;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 10px;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+  }
+
+  .segment-item.active {
+    background: linear-gradient(135deg, #FF9A6C, #FF7A47);
+    color: white;
+    font-weight: 600;
+  }
+
+  /* 周报卡 */
+  .weekly-card {
+    margin: 0 20px 16px;
+    background: linear-gradient(135deg, #FFB289 0%, #F8A5C2 100%);
+    border-radius: var(--radius-card);
+    padding: 20px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .weekly-card::after {
+    content: '📊';
+    position: absolute;
+    right: -10px;
+    bottom: -20px;
+    font-size: 100px;
+    opacity: 0.1;
+  }
+
+  .weekly-card-title {
+    font-size: 13px;
+    opacity: 0.85;
+    font-weight: 500;
+  }
+
+  .weekly-card-period {
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+
+  .weekly-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .weekly-stat {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 14px;
+    padding: 12px;
+    backdrop-filter: blur(10px);
+  }
+
+  .weekly-stat-value {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .weekly-stat-label {
+    font-size: 11px;
+    opacity: 0.85;
+    margin-top: 2px;
+  }
+
+  .weekly-stat-trend {
+    font-size: 10px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  /* 图表卡片 */
+  .chart-card {
+    margin: 0 20px 16px;
+    background: var(--card);
+    border-radius: var(--radius-card);
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .chart-title {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .chart-legend {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .legend-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .chart-svg {
+    width: 100%;
+    height: 140px;
+  }
+
+  /* AI 解读 */
+  .insight-card {
+    margin: 0 20px 16px;
+    background: linear-gradient(135deg, rgba(255, 154, 108, 0.1), rgba(248, 165, 194, 0.1));
+    border: 1px solid rgba(255, 154, 108, 0.3);
+    border-radius: var(--radius-card);
+    padding: 16px;
+  }
+
+  .insight-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .insight-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--pink));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+  }
+
+  .insight-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .insight-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  /* ============ 设置页 ============ */
+  .page-settings {
+    padding-bottom: 20px;
+  }
+
+  .settings-header {
+    padding: 20px 20px 0;
+  }
+
+  .settings-title {
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  .settings-section {
+    margin: 16px 20px;
+    background: var(--card);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .settings-row {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(26, 26, 26, 0.05);
+  }
+
+  .settings-row:last-child {
+    border-bottom: none;
+  }
+
+  .settings-row-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .settings-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+  }
+
+  .settings-icon.primary { background: linear-gradient(135deg, var(--primary), var(--primary-light)); }
+  .settings-icon.mint { background: var(--mint); }
+  .settings-icon.pink { background: var(--pink); }
+  .settings-icon.purple { background: var(--purple); }
+  .settings-icon.yellow { background: var(--yellow); }
+
+  .settings-label {
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  .settings-value {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .chevron {
+    color: var(--text-tertiary);
+    font-size: 16px;
+  }
+
+  /* ============ 深色模式 ============ */
+  body.dark-mode {
+    --bg: #1A1A1A;
+    --card: #2A2A2C;
+    --text-primary: #F5F5F5;
+    --text-secondary: rgba(245, 245, 245, 0.65);
+    --text-tertiary: rgba(245, 245, 245, 0.35);
+  }
+  body.dark-mode { background: #0F0F0F; color: var(--text-primary); }
+  body.dark-mode .phone { box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4), 0 0 0 12px #1a1a1a, 0 0 0 14px #2a2a2a; }
+  body.dark-mode .timeline::before { background: rgba(245, 245, 245, 0.1); }
+  body.dark-mode .timeline-dot { border-color: var(--card); }
+  body.dark-mode .date-item { background: var(--card); color: var(--text-primary); }
+  body.dark-mode .date-item.active { background: var(--bg); color: white; }
+  body.dark-mode .event-row { background: var(--card); }
+  body.dark-mode .event-title { color: var(--text-primary); }
+  body.dark-mode .event-time { color: var(--text-secondary); }
+  body.dark-mode .settings-section, body.dark-mode .chart-card,
+  body.dark-mode .weekly-card, body.dark-mode .insight-card,
+  body.dark-mode .log-section, body.dark-mode .summary-card,
+  body.dark-mode .hero-card { background: var(--card); }
+  body.dark-mode .summary-icon, body.dark-mode .settings-icon { filter: brightness(0.95); }
+  body.dark-mode .modal-bottom-sheet, body.dark-mode .cry-picker { background: var(--card); }
+  body.dark-mode .log-field-entry { color: var(--text-primary); }
+  body.dark-mode .log-night-row { background: rgba(196,181,253,0.15); }
+  body.dark-mode .cry-intensity-btn { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+  body.dark-mode .cry-tag { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+  body.dark-mode .recent-action-hint { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+  body.dark-mode .train-method-row { border-top-color: rgba(255,255,255,0.05); }
+  body.dark-mode .train-method-row input, body.dark-mode .train-method-row select { background: rgba(255,255,255,0.05); color: var(--text-primary); border-color: rgba(255,255,255,0.1); }
+  body.dark-mode .phone-container { background: linear-gradient(135deg, #0F0F0F 0%, #1A1A1A 100%); }
+  body.dark-mode .tab-bar { background: #000; border-top: 1px solid rgba(255,255,255,0.1); }
+  body.dark-mode .toast { background: rgba(255,255,255,0.95); color: #1a1a1a; }
+  body.dark-mode .timeline-dot.nap { box-shadow: 0 0 0 1px rgba(0,0,0,0.3); }
+  body.dark-mode .timeline-dot { box-shadow: 0 0 0 1px rgba(0,0,0,0.3); }
+
+  /* ============ 设置项开关样式 ============ */
+  .switch { position: relative; display: inline-block; width: 44px; height: 26px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(26,26,26,0.15); transition: 0.3s; border-radius: 26px; }
+  .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background: white; transition: 0.3s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  input:checked + .slider { background: linear-gradient(135deg, #FF9A6C, #FF7A47); }
+  input:checked + .slider:before { transform: translateX(18px); }
+
+  .settings-row-clickable { cursor: pointer; transition: background 0.2s; }
+  .settings-row-clickable:active { background: rgba(0,0,0,0.03); }
+
+  /* ============ 宝宝档案卡片 ============ */
+  .baby-profile-card { margin: 16px 20px; background: linear-gradient(135deg, #FFB289 0%, #F8A5C2 100%); border-radius: var(--radius-card); padding: 20px; color: white; position: relative; overflow: hidden; }
+  body.dark-mode .baby-profile-card { background: linear-gradient(135deg, #FF7A47, #C44569); }
+  .baby-profile-name { font-size: 22px; font-weight: 700; }
+  .baby-profile-meta { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+  .baby-profile-edit { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.25); color: white; padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+  /* ============ 训练方法模块 ============ */
+  /* ============ 折叠面板 ============ */
+  .collapse-section { margin: 0 20px 12px; background: var(--card); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); }
+  .collapse-header { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 15px; font-weight: 600; user-select: none; }
+  .collapse-header .arrow { font-size: 14px; transition: transform 0.25s; color: var(--text-tertiary); }
+  .collapse-header.open .arrow { transform: rotate(180deg); }
+  .collapse-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; font-size: 13px; line-height: 1.8; color: var(--text-secondary); padding: 0 16px; border-top: 1px solid transparent; transition: max-height 0.3s ease, border-color 0.3s, padding 0.3s; }
+  .collapse-body.open { max-height: 6000px; border-top: 1px solid rgba(26,26,26,0.06); padding: 12px 16px; }
+  body.dark-mode .collapse-body.open { border-top-color: rgba(255,255,255,0.06); }
+  .collapse-badge { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: 700; color: white; flex-shrink: 0; }
+
+  /* ============ 时间滚轮选择器 ============ */
+  .time-picker-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); z-index: 600; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  .time-picker-overlay.active { opacity: 1; pointer-events: auto; }
+  .time-picker-panel { background: var(--card); border-radius: 24px 24px 0 0; padding: 16px 20px 40px; width: 100%; max-width: 430px; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32,0.72,0,1); }
+  .time-picker-overlay.active .time-picker-panel { transform: translateY(0); }
+  .time-picker-panel h3 { text-align: center; font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+  .time-picker-panel input[type="time"] { width: 100%; padding: 12px 16px; font-size: 32px; text-align: center; border: 2px solid rgba(26,26,26,0.1); border-radius: 16px; background: rgba(255,255,255,0.5); color: var(--text-primary); font-family: 'SF Pro Display', -apple-system, sans-serif; font-weight: 600; }
+  body.dark-mode .time-picker-panel input[type="time"] { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+
+  .train-method-section { margin: 16px 20px; background: var(--card); border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--shadow); }
+  .train-method-title { padding: 14px 16px 8px; font-size: 14px; font-weight: 600; }
+  .train-method-row { padding: 12px 16px; border-top: 1px solid rgba(26,26,26,0.05); }
+  .train-method-row label { font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 4px; }
+  .train-method-row input, .train-method-row select { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(26,26,26,0.1); background: rgba(255,255,255,0.6); font-size: 14px; color: var(--text-primary); font-family: inherit; }
+
+  .icloud-indicator { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .icloud-indicator.on { background: rgba(79, 209, 197, 0.15); color: #14B8A6; }
+  .icloud-indicator.off { background: rgba(255, 107, 107, 0.15); color: #FF6B6B; }
+
+  .date-carousel-hint { text-align: center; font-size: 10px; color: var(--text-tertiary); padding: 4px 20px; margin-top: -8px; }
+
+  /* ============ 日志页（咨询师表格） ============ */
+  .page-log { padding: 0 20px 20px; }
+  .log-header { padding: 20px 0 8px; }
+  .log-title { font-size: 28px; font-weight: 700; }
+  .log-subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+  .log-day-switcher { display: flex; gap: 6px; margin: 12px 0; overflow-x: auto; scrollbar-width: none; }
+  .log-day-switcher::-webkit-scrollbar { display: none; }
+  .log-day-btn { flex-shrink: 0; padding: 6px 14px; border-radius: 18px; font-size: 12px; font-weight: 600; background: var(--card); color: var(--text-secondary); transition: all 0.2s; }
+  .log-day-btn.active { background: var(--primary); color: white; }
+  .log-section { background: var(--card); border-radius: var(--radius-card); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .log-section-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .log-section-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; color: white; font-weight: 600; }
+  .log-section-badge.nap { background: linear-gradient(135deg, #FF9A6C, #FFB289); }
+  .log-section-badge.dusk { background: linear-gradient(135deg, #FCD34D, #FDE68A); color: #92400E; }
+  .log-section-badge.night { background: linear-gradient(135deg, #C4B5FD, #DDD6FE); color: #5B21B6; }
+  .log-section-badge.morning { background: linear-gradient(135deg, #4FD1C5, #99F6E4); color: #064E3B; }
+  .log-row { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(26,26,26,0.04); gap: 6px; }
+  .log-row:last-child { border-bottom: none; }
+  .log-field-label { width: 90px; font-size: 12px; color: var(--text-secondary); flex-shrink: 0; }
+  .log-field-value { flex: 1; font-size: 14px; font-weight: 500; min-height: 24px; display: flex; align-items: center; }
+  .log-field-empty { color: var(--text-tertiary); font-style: italic; font-weight: 400; }
+  .log-field-entry { background: transparent; border: none; font-family: inherit; font-size: 14px; font-weight: 500; padding: 4px 0; border-bottom: 1px dashed rgba(26,26,26,0.15); outline: none; width: 100%; color: var(--text-primary); }
+  .log-field-entry:focus { border-bottom-color: var(--primary); }
+  .log-field-entry::placeholder { color: var(--text-tertiary); font-weight: 400; }
+  .log-night-wakings { grid-column: 1 / -1; }
+  .log-night-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; padding: 10px; background: rgba(196,181,253,0.08); border-radius: 8px; font-size: 12px; flex-wrap: wrap; }
+  .log-night-row input { width: 60px; border: 1px solid rgba(26,26,26,0.1); border-radius: 6px; padding: 4px 8px; font-size: 12px; }
+  .log-add-btn { font-size: 12px; color: var(--primary); font-weight: 600; padding: 6px 0; cursor: pointer; }
+  .log-ww { font-size: 10px; color: var(--mint); font-weight: 600; margin-left: 4px; }
+  .log-section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; }
+  .log-section-grid.single { grid-template-columns: 1fr; }
+
+  /* 数据总览卡片 */
+  .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+  .overview-card { background: var(--card); border-radius: 16px; padding: 14px; box-shadow: var(--shadow); }
+  .overview-card-header { font-size: 11px; color: var(--text-secondary); font-weight: 600; display: flex; justify-content: space-between; }
+  .overview-card-value { font-size: 22px; font-weight: 700; margin: 4px 0; }
+  .overview-card-trend { font-size: 11px; }
+  .overview-card-trend.up { color: #10B981; }
+  .overview-card-trend.down { color: var(--primary); }
+  .modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 300;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .modal-bottom-sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--card);
+    border-radius: 24px 24px 0 0;
+    padding: 16px 20px 32px;
+    z-index: 400;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .modal-bottom-sheet.active {
+    transform: translateY(0);
+  }
+
+  .sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: rgba(26, 26, 26, 0.15);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+
+  .sheet-title {
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .quick-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .quick-action-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #FFB289, #F8A5C2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    box-shadow: 0 8px 20px rgba(255, 154, 108, 0.3);
+    color: white;
+    transition: transform 0.15s;
+  }
+
+  .quick-action-btn.feed { background: linear-gradient(135deg, #C4B5FD, #DDD6FE); box-shadow: 0 8px 20px rgba(196, 181, 253, 0.3); }
+  .quick-action-btn.cry { background: linear-gradient(135deg, #F8A5C2, #FECDD3); box-shadow: 0 8px 20px rgba(248, 165, 194, 0.3); }
+  .quick-action-btn.wake { background: linear-gradient(135deg, #FCD34D, #FEF3C7); box-shadow: 0 8px 20px rgba(252, 211, 77, 0.3); }
+  .quick-action-btn.cry-toggle { background: linear-gradient(135deg, #F8A5C2, #FECDD3); box-shadow: 0 8px 20px rgba(248, 165, 194, 0.3); }
+  .quick-action-btn.feed-toggle { background: linear-gradient(135deg, #C4B5FD, #DDD6FE); box-shadow: 0 8px 20px rgba(196, 181, 253, 0.3); }
+  .quick-action-btn.nap-toggle { background: linear-gradient(135deg, #4F7FD9, #8DB9F4); box-shadow: 0 8px 20px rgba(79, 125, 217, 0.3); }
+  .quick-action-btn.putdown-toggle { background: linear-gradient(135deg, #4FD1C5, #99F6E4); box-shadow: 0 8px 20px rgba(79, 209, 197, 0.3); }
+  .quick-action-btn.ritual-toggle { background: linear-gradient(135deg, #A78BFA, #DDD6FE); box-shadow: 0 8px 20px rgba(167, 139, 250, 0.3); color: #5B21B6; }
+  .quick-action-btn.soothe-toggle { background: linear-gradient(135deg, #FB923C, #FED7AA); box-shadow: 0 8px 20px rgba(251, 146, 60, 0.3); }
+
+  .quick-action-counter { font-size: 10px; color: var(--text-secondary); margin-top: 2px; font-weight: 500; }
+
+  /* toggle 激活态 */
+  .toggle-active {
+    box-shadow: 0 0 0 4px rgba(79, 125, 217, 0.2), 0 10px 24px rgba(79, 125, 217, 0.28) !important;
+    transform: scale(1.04);
+  }
+
+  /* 哭闹中状态 */
+  .quick-action-btn.crying-active {
+    background: linear-gradient(135deg, #FF6B6B, var(--pink));
+    box-shadow: 0 8px 20px rgba(255, 107, 107, 0.4);
+    animation: cryPulse 1.2s ease-in-out infinite;
+  }
+  @keyframes cryPulse {
+    0%, 100% { box-shadow: 0 8px 20px rgba(255, 107, 107, 0.4); transform: scale(1); }
+    50% { box-shadow: 0 12px 32px rgba(255, 107, 107, 0.7); transform: scale(1.06); }
+  }
+
+  .quick-action-status {
+    font-size: 9px;
+    font-weight: 700;
+    color: #4F7FD9;
+    margin-top: 2px;
+    line-height: 1.25;
+    text-align: center;
+  }
+
+  .cry-label-start, .cry-label-end {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  .quick-action-btn:active {
+    transform: scale(0.9);
+  }
+
+  .quick-action-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .recent-action-hint {
+    background: rgba(255, 154, 108, 0.08);
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  /* 哭闹强度选择 */
+  .cry-picker-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 500;
+    display: flex;
+    align-items: flex-end;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .cry-picker-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .cry-picker {
+    background: var(--card);
+    border-radius: 24px 24px 0 0;
+    padding: 16px 20px 40px;
+    width: 100%;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .cry-picker-overlay.active .cry-picker {
+    transform: translateY(0);
+  }
+
+  .cry-picker h3 {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+
+  .cry-intensity-options {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .cry-intensity-btn {
+    aspect-ratio: 1;
+    border-radius: 16px;
+    background: rgba(255, 154, 108, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+  }
+
+  .cry-intensity-btn.selected {
+    background: linear-gradient(135deg, var(--primary), var(--pink));
+    color: white;
+    transform: scale(1.08);
+    border-color: white;
+    box-shadow: 0 8px 20px rgba(255, 154, 108, 0.4);
+  }
+
+  .cry-intensity-num {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .cry-intensity-emoji {
+    font-size: 18px;
+  }
+
+  .cry-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .cry-tag {
+    padding: 8px 14px;
+    border-radius: 20px;
+    background: rgba(26, 26, 26, 0.05);
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+
+  .cry-tag.selected {
+    background: var(--primary);
+    color: white;
+  }
+
+  .cry-summary {
+    background: rgba(255, 154, 108, 0.08);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .btn-confirm {
+    background: linear-gradient(135deg, #FF9A6C, #FF7A47);
+    color: white;
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    width: 100%;
+    box-shadow: 0 8px 24px rgba(255, 122, 71, 0.3);
+  }
+
+  /* Toast */
+  .toast {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+    backdrop-filter: blur(10px);
+  }
+
+  .toast.active {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .toast .toast-icon {
+    display: inline-block;
+    margin-right: 6px;
+  }
+  body.dark-mode .hero-card.sleeping { background: linear-gradient(135deg, #315CA9, #527CCB 55%, #6A9DDF); }
+
+  /* 大字号模式（长辈友好） */
+  body.large-text .settings-label,
+  body.large-text .event-title,
+  body.large-text .collapse-header,
+  body.large-text .quick-action-label,
+  body.large-text .train-method-row input,
+  body.large-text .train-method-row select { font-size: 18px; }
+  body.large-text .settings-value,
+  body.large-text .event-time,
+  body.large-text .event-detail,
+  body.large-text .collapse-body,
+  body.large-text .recent-action-hint,
+  body.large-text .hero-subtitle,
+  body.large-text .log-field-label,
+  body.large-text .log-field-value,
+  body.large-text .log-field-entry { font-size: 16px; line-height: 1.75; }
+  body.large-text .timeline-date { font-size: 26px; }
+  body.large-text .settings-title,
+  body.large-text .analytics-title,
+  body.large-text .log-title { font-size: 32px; }
+  body.large-text .hero-label { font-size: 16px; }
+  body.large-text .hero-time { font-size: 44px; }
+  body.large-text .quick-action-status,
+  body.large-text .quick-action-counter { font-size: 13px; }
+  body.large-text .settings-row { padding-top: 17px; padding-bottom: 17px; }
+
+  /* 手册阅读辅助 */
+  .manual-intro { margin: 12px 20px 16px; padding: 16px; border-radius: 18px; color: white; background: linear-gradient(135deg,#4F7FD9,#8DB9F4); box-shadow: 0 8px 24px rgba(79,125,217,.2); }
+  .manual-intro-title { font-size: 17px; font-weight: 700; }
+  .manual-intro-text { margin-top: 7px; font-size: 13px; line-height: 1.7; opacity: .94; }
+  .manual-step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; margin-bottom: 10px; align-items: start; }
+  .manual-step:last-child { margin-bottom: 0; }
+  .manual-step-num { width: 26px; height: 26px; border-radius: 50%; background: rgba(79,125,217,.12); color: #3E69BE; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  .manual-note { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: rgba(79,125,217,.08); color: var(--text-primary); }
+  .manual-source-tabs { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 20px 14px; padding:5px; border-radius:16px; background:rgba(26,26,26,.06); }
+  .manual-source-tab { padding:10px 8px; border-radius:12px; color:var(--text-secondary); font-size:13px; font-weight:700; text-align:center; }
+  .manual-source-tab.active { background:var(--card); color:var(--text-primary); box-shadow:var(--shadow); }
+  .manual-source-panel.hidden-source { display:none; }
+  .source-link { display:inline-flex; margin-top:10px; color:#315CA9; font-size:12px; font-weight:650; text-decoration:none; }
+  .manual-subtitle { margin:14px 0 6px; color:var(--text-primary); font-size:13px; font-weight:750; }
+  .manual-list { margin:6px 0 10px; padding-left:20px; }
+  .manual-list li { margin:6px 0; }
+  .manual-danger { margin:10px 0; padding:10px 12px; border-radius:12px; background:rgba(229,72,77,.09); color:var(--text-primary); }
+  .manual-good { margin:10px 0; padding:10px 12px; border-radius:12px; background:rgba(46,158,107,.10); color:var(--text-primary); }
+  .manual-table-wrap { width:100%; overflow-x:auto; margin:8px 0 12px; }
+  .manual-table { width:100%; min-width:520px; border-collapse:collapse; font-size:12px; line-height:1.55; }
+  .manual-table th,.manual-table td { padding:8px; border:1px solid rgba(26,26,26,.10); text-align:left; vertical-align:top; }
+  .manual-table th { background:rgba(79,125,217,.08); color:var(--text-primary); }
+  body.dark-mode .manual-table th,body.dark-mode .manual-table td { border-color:rgba(255,255,255,.12); }
+  .manual-myth { margin:8px 0; padding:10px 12px; border-radius:12px; background:rgba(26,26,26,.04); }
+  body.dark-mode .manual-myth { background:rgba(255,255,255,.05); }
+  .manual-myth b { color:var(--text-primary); }
+
+  .metric-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin:0 20px 14px; }
+  .metric-card { background:var(--card); border-radius:16px; padding:14px; box-shadow:var(--shadow); }
+  .metric-label { color:var(--text-secondary); font-size:11px; font-weight:650; }
+  .metric-value { font-size:22px; font-weight:750; margin-top:4px; }
+  .metric-note { color:var(--text-tertiary); font-size:10px; margin-top:3px; line-height:1.4; }
+  .analysis-section-title { margin:18px 20px 10px; font-size:13px; font-weight:700; color:var(--text-secondary); }
+  .analysis-row { display:grid; grid-template-columns:74px 1fr 48px; gap:8px; align-items:center; margin-top:9px; font-size:11px; color:var(--text-secondary); }
+  .analysis-bar { height:8px; border-radius:5px; background:rgba(26,26,26,.06); overflow:hidden; }
+  .analysis-bar-fill { height:100%; border-radius:inherit; }
+
+  .cloud-status-pill { display:inline-flex; align-items:center; gap:5px; padding:4px 9px; border-radius:10px; font-size:11px; font-weight:650; background:rgba(26,26,26,.07); color:var(--text-secondary); }
+  .cloud-status-pill.online { background:rgba(79,209,197,.16); color:#137A72; }
+  .cloud-status-pill.syncing { background:rgba(79,125,217,.12); color:#315CA9; }
+  .cloud-account-card { margin:16px 20px; padding:16px; border-radius:20px; color:white; background:linear-gradient(135deg,#4F7FD9,#8DB9F4); box-shadow:0 9px 26px rgba(79,125,217,.22); }
+  .cloud-account-title { font-size:16px; font-weight:750; }
+  .cloud-account-subtitle { margin-top:5px; font-size:12px; line-height:1.6; opacity:.9; }
+</style>
+<style>
+  .ios-install-guide {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.93); z-index: 99999;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    color: white; text-align: center; font-family: -apple-system,'PingFang SC',sans-serif;
+  }
+  .ios-install-guide.show { display: flex; }
+  .ios-install-guide .icon-preview {
+    width: 80px; height: 80px; border-radius: 18px;
+    background: linear-gradient(135deg,#FF9A6C,#F8A5C2);
+    margin: 0 auto 20px; font-size: 40px; display: flex;
+    align-items: center; justify-content: center;
+    box-shadow: 0 8px 40px rgba(255,154,108,0.5);
+  }
+  .ios-install-guide h2 { font-size: 24px; margin: 10px 0; }
+  .ios-install-guide .steps { font-size: 16px; max-width: 300px; text-align: left; line-height: 2.5; }
+  .ios-install-guide .step-num {
+    display: inline-block; width: 26px; height: 26px;
+    background: #FF9A6C; border-radius: 50%; text-align: center;
+    font-size: 14px; font-weight: 700; margin-right: 8px; line-height: 26px;
+  }
+  .ios-install-guide button {
+    margin-top: 24px; background: white; color: #FF6B4A;
+    border: none; border-radius: 24px; padding: 14px 40px;
+    font-size: 17px; font-weight: 700; cursor: pointer;
+  }
+</style>
+
+<style>
+  /* ============ 移动端自适应 + 灵动岛 + 导航栏避让 ============ */
+  :root {
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+  }
+  html, body {
+    height: 100%;
+    overscroll-behavior-y: none;
+  }
+  body {
+    padding-top: var(--safe-top);
+    padding-bottom: var(--safe-bottom);
+    /* 两侧留出返回手势和曲面屏边缘 */
+    padding-left: max(0px, var(--safe-left));
+    padding-right: max(0px, var(--safe-right));
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  /* 顶部导航：叠加 safe-top，确保不被灵动岛/状态栏遮挡 */
+  .timeline-header, .top-header, .header, .date-carousel-wrap, .page-title-wrap {
+    padding-top: max(8px, var(--safe-top));
+  }
+  .cloud-status-pill {
+    top: calc(8px + var(--safe-top));
+  }
+  /* 底部：所有绝对定位的底部元素都加上 safe-bottom */
+  .tab-bar, .bottom-actions, .quick-action-bar, .footer-cta {
+    padding-bottom: calc(12px + var(--safe-bottom));
+  }
+  #fabRecord {
+    bottom: calc(80px + max(var(--safe-bottom), 16px));
+  }
+  /* 弹窗 (bottom-sheet) 底部留出 Android 导航栏空隙 */
+  .modal-bottom-sheet {
+    padding-bottom: calc(16px + var(--safe-bottom) + 10px);
+    border-radius: 24px 24px 0 0;
+  }
+  .modal-bottom-sheet .sheet-handle {
+    margin-top: 12px;
+  }
+  /* 九月分界 */
+  .date-month-divider {
+    flex: 0 0 auto;
+    align-self: center;
+    padding: 4px 10px;
+    margin: 0 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: rgba(255,154,108,0.12);
+    border-radius: 999px;
+    letter-spacing: 0.5px;
+  }
+  /* 折叠屏（展开态）：主区域居中 */
+  @media (min-width: 700px) and (min-height: 500px) {
+    .hero-card { max-width: 720px; margin-left: auto; margin-right: auto; }
+  }
+  /* iPhone 17 Pro Dynamic Island：额外顶部 padding */
+  @supports (padding-top: env(safe-area-inset-top)) {
+    .top-header, .timeline-header {
+      padding-top: max(12px, env(safe-area-inset-top));
+    }
+  }
+  /* 主容器使用 dvh 解决底部空白 */
+  .app-container, #appRoot {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  .page-content {
+    flex: 1 1 auto;
+  }
+</style>
+
+</head>
+<body>
+
+<div class="ios-install-guide" id="iosInstall">
+  <div class="icon-preview">🌙</div>
+  <h2>安装到 iPhone</h2>
+  <p style="opacity:0.7;margin-bottom:20px">以下步骤只需 10 秒</p>
+  <div class="steps">
+    <div><span class="step-num">1</span>点底部 <b style="font-size:20px">↑</b> 分享</div>
+    <div><span class="step-num">2</span>选<b>"添加到主屏幕"</b></div>
+    <div><span class="step-num">3</span>点右上角 <b>"添加"</b> ✓</div>
+  </div>
+  <button onclick="dismissInstallGuide()">我知道了</button>
+</div>
+
+  <script src="./config.js"></script>
+  <script src="./app-sync.js"></script>
+<script>
+(function(){
+  var ua=navigator.userAgent;
+  var iOS=/iPhone|iPad/.test(ua);
+  var safari=/Safari/.test(ua)&&!/CriOS|FxiOS/.test(ua);
+  var alone=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone;
+  if(iOS&&safari&&!alone&&!localStorage.getItem('ios-guide-dismissed')){
+    document.getElementById('iosInstall').classList.add('show');
+  }
+})();
+function dismissInstallGuide(){
+  document.getElementById('iosInstall').classList.remove('show');
+  localStorage.setItem('ios-guide-dismissed','1');
+}
+</script>
+
+<div class="phone-container">
+  <div class="phone">
+    <!-- 引导页 -->
+    <div class="page page-onboarding hidden" id="pageOnboarding">
+      <div class="hero-icon">🌙</div>
+      <h1>欢迎使用<br>BabySleepTracker</h1>
+      <p>帮助宝宝建立良好的睡眠习惯<br>让全家睡个好觉</p>
+
+      <div class="onboarding-form" id="onboardingStep2" style="display:none;">
+        <div class="form-field">
+          <div class="form-label">宝宝的名字</div>
+          <input type="text" class="form-input" id="babyName" value="豆芽" placeholder="输入宝宝名字">
+        </div>
+        <div class="form-field">
+          <div class="form-label">出生日期</div>
+          <input type="date" class="form-input" id="babyBirthday" value="2026-03-24">
+        </div>
+      </div>
+
+      <div class="option-cards" id="onboardingStep3" style="display:none;">
+        <div class="option-card selected" data-method="indirect">
+          <div class="option-icon mint">📚</div>
+          <div>
+            <div>间接安抚法（推荐）</div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Day 1: 3/5/7 分钟</div>
+          </div>
+        </div>
+        <div class="option-card" data-method="chair">
+          <div class="option-icon pink">🪑</div>
+          <div>椅子法</div>
+        </div>
+        <div class="option-card" data-method="none">
+          <div class="option-icon purple">⏸️</div>
+          <div>不介入法</div>
+        </div>
+      </div>
+
+      <div class="onboarding-progress">
+        <div class="dot active" id="dot1"></div>
+        <div class="dot" id="dot2"></div>
+        <div class="dot" id="dot3"></div>
+      </div>
+
+      <button class="btn-primary" id="onboardingNext">开始使用</button>
+    </div>
+
+    <!-- 时间轴主页 -->
+    <div class="page page-timeline" id="pageTimeline">
+      <div class="timeline-header">
+        <div class="timeline-date" id="timelineDate" role="button" tabindex="0" aria-label="返回今天" title="点击返回今天" onclick="goToday()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();goToday();}">--</div>
+        <div class="timeline-day-tag" id="timelineDayTag">准备训练</div>
+      </div>
+
+      <div class="date-carousel" id="dateCarousel"></div>
+
+      <div class="hero-card" id="heroCard" onclick="flipHero()">
+        <div class="hero-card-inner">
+          <div class="hero-card-front">
+            <div class="hero-label" id="heroLabel">预计下一觉入睡窗口</div>
+            <div class="hero-time" id="heroTime">--:--</div>
+            <div class="hero-subtitle" id="heroSubtitle">等待最新睡眠数据...</div>
+            <div class="hero-progress">
+              <div class="hero-progress-bar">
+                <div class="hero-progress-fill" id="heroProgressFill" style="width: 0%"></div>
+              </div>
+              <div class="hero-progress-text">
+                <span id="heroProgressText">--</span>
+                <span>日间目标 3.5–4.5h</span>
+              </div>
+            </div>
+          </div>
+          <div class="hero-card-back">
+            <div class="hero-back-title">📐 预计下一觉 · 计算原则</div>
+            <div class="hero-back-body" id="heroBackBody">—</div>
+          </div>
+        </div>
+        <div class="hero-flip-hint" id="heroFlipHint">👆 点我看计算原则</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-item">
+          <div class="summary-icon sleep">😴</div>
+          <div class="summary-value" id="sumTotalSleep">--</div>
+          <div class="summary-label">总睡眠</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-icon nap">🌙</div>
+          <div class="summary-value" id="sumNapCount">--</div>
+          <div class="summary-label">小觉</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-icon cry">😢</div>
+          <div class="summary-value" id="sumCryCount">--</div>
+          <div class="summary-label">哭闹</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-icon feed">🍼</div>
+          <div class="summary-value" id="sumFeedCount">--</div>
+          <div class="summary-label">喂养</div>
+        </div>
+      </div>
+
+      <div class="timeline-section">
+        <div class="timeline-section-header">
+          <div class="section-title">今日时间轴</div>
+          <div class="timeline-filter-wrap">
+            <button class="timeline-filter-button" id="timelineFilterButton" onclick="toggleTimelineFilterMenu(event)">🔽 筛选</button>
+            <div class="timeline-filter-menu" id="timelineFilterMenu" onclick="event.stopPropagation()">
+              <label class="filter-option"><input type="checkbox" data-filter-option="all" checked onchange="toggleTimelineFilter('all',this.checked)"><span class="filter-option-label">全部类别</span><span class="filter-count" data-filter-count="all">0</span></label>
+              <label class="filter-option"><input type="checkbox" data-filter-option="sleep" checked onchange="toggleTimelineFilter('sleep',this.checked)"><span class="filter-option-label">🌙 睡眠</span><span class="filter-count" data-filter-count="sleep">0</span></label>
+              <label class="filter-option"><input type="checkbox" data-filter-option="feed" checked onchange="toggleTimelineFilter('feed',this.checked)"><span class="filter-option-label">🍼 喂奶</span><span class="filter-count" data-filter-count="feed">0</span></label>
+              <label class="filter-option"><input type="checkbox" data-filter-option="routine" checked onchange="toggleTimelineFilter('routine',this.checked)"><span class="filter-option-label">🛏️ 睡前</span><span class="filter-count" data-filter-count="routine">0</span></label>
+              <label class="filter-option"><input type="checkbox" data-filter-option="cry" checked onchange="toggleTimelineFilter('cry',this.checked)"><span class="filter-option-label">🥺 哭闹</span><span class="filter-count" data-filter-count="cry">0</span></label>
+              <label class="filter-option"><input type="checkbox" data-filter-option="soothe" checked onchange="toggleTimelineFilter('soothe',this.checked)"><span class="filter-option-label">🤗 安抚</span><span class="filter-count" data-filter-count="soothe">0</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="timeline" id="timelineEvents">
+          <!-- JS 生成 -->
+        </div>
+      </div>
+
+      <div style="height:20px"></div>
+    </div>
+
+    <!-- 分析页 -->
+    <div class="page page-analytics hidden" id="pageAnalytics">
+      <div class="analytics-header">
+        <div class="analytics-title">分析报告</div>
+        <div class="analytics-subtitle">查看宝宝的睡眠进展</div>
+      </div>
+
+      <div class="segment-control">
+        <div class="segment-item active" data-range="week">本周</div>
+        <div class="segment-item" data-range="month">本月</div>
+        <div class="segment-item" data-range="all">全部</div>
+      </div>
+
+      <div class="weekly-card">
+        <div class="weekly-card-title">📅 第 1 周训练报告</div>
+        <div class="weekly-card-period">8月5日 – 8月11日</div>
+        <div class="weekly-stats">
+          <div class="weekly-stat">
+            <div class="weekly-stat-value">9.2h</div>
+            <div class="weekly-stat-label">日均睡眠</div>
+            <div class="weekly-stat-trend">📈 +1.8h</div>
+          </div>
+          <div class="weekly-stat">
+            <div class="weekly-stat-value">12min</div>
+            <div class="weekly-stat-label">入睡耗时中位</div>
+            <div class="weekly-stat-trend">📉 -35%</div>
+          </div>
+          <div class="weekly-stat">
+            <div class="weekly-stat-value">4.3</div>
+            <div class="weekly-stat-label">日均哭闹</div>
+            <div class="weekly-stat-trend">📉 -2.1</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">📈 睡眠时长趋势</div>
+          <div class="chart-legend">
+            <span><span class="legend-dot" style="background:#FF9A6C"></span>日间</span>
+            <span><span class="legend-dot" style="background:#4FD1C5"></span>夜觉</span>
+          </div>
+        </div>
+        <svg class="chart-svg" viewBox="0 0 320 140" preserveAspectRatio="none">
+          <!-- 网格线 -->
+          <line x1="0" y1="35" x2="320" y2="35" stroke="rgba(0,0,0,0.05)" stroke-dasharray="2,3"/>
+          <line x1="0" y1="70" x2="320" y2="70" stroke="rgba(0,0,0,0.05)" stroke-dasharray="2,3"/>
+          <line x1="0" y1="105" x2="320" y2="105" stroke="rgba(0,0,0,0.05)" stroke-dasharray="2,3"/>
+
+          <!-- 日间睡眠柱 -->
+          <rect x="10" y="60" width="20" height="40" rx="4" fill="#FF9A6C" opacity="0.8"/>
+          <rect x="50" y="55" width="20" height="45" rx="4" fill="#FF9A6C" opacity="0.8"/>
+          <rect x="90" y="50" width="20" height="50" rx="4" fill="#FF9A6C" opacity="0.8"/>
+          <rect x="130" y="45" width="20" height="55" rx="4" fill="#FF9A6C" opacity="0.8"/>
+          <rect x="170" y="40" width="20" height="60" rx="4" fill="#FF9A6C" opacity="0.8"/>
+          <rect x="210" y="35" width="20" height="65" rx="4" fill="#FF9A6C" opacity="0.8"/>
+          <rect x="250" y="30" width="20" height="70" rx="4" fill="#FF9A6C" opacity="0.8"/>
+          <rect x="290" y="28" width="20" height="72" rx="4" fill="#FF9A6C"/>
+
+          <!-- 夜觉折线 -->
+          <polyline points="20,90 60,85 100,80 140,75 180,72 220,68 260,65 300,62"
+            fill="none" stroke="#4FD1C5" stroke-width="2.5" stroke-linecap="round"/>
+
+          <!-- 数据点 -->
+          <circle cx="20" cy="90" r="3" fill="#4FD1C5"/>
+          <circle cx="60" cy="85" r="3" fill="#4FD1C5"/>
+          <circle cx="100" cy="80" r="3" fill="#4FD1C5"/>
+          <circle cx="140" cy="75" r="3" fill="#4FD1C5"/>
+          <circle cx="180" cy="72" r="3" fill="#4FD1C5"/>
+          <circle cx="220" cy="68" r="3" fill="#4FD1C5"/>
+          <circle cx="260" cy="65" r="3" fill="#4FD1C5"/>
+          <circle cx="300" cy="62" r="3" fill="#4FD1C5"/>
+
+          <!-- X 轴标签 -->
+          <text x="20" y="135" font-size="9" fill="rgba(0,0,0,0.5)" text-anchor="middle">周一</text>
+          <text x="100" y="135" font-size="9" fill="rgba(0,0,0,0.5)" text-anchor="middle">周三</text>
+          <text x="180" y="135" font-size="9" fill="rgba(0,0,0,0.5)" text-anchor="middle">周五</text>
+          <text x="260" y="135" font-size="9" fill="rgba(0,0,0,0.5)" text-anchor="middle">周日</text>
+        </svg>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">📉 入睡耗时趋势</div>
+          <div class="chart-legend">
+            <span>越短越好 ↓</span>
+          </div>
+        </div>
+        <svg class="chart-svg" viewBox="0 0 320 140" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="sleepGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#F8A5C2" stop-opacity="0.5"/>
+              <stop offset="100%" stop-color="#F8A5C2" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+
+          <!-- 渐变区域 -->
+          <path d="M 0,30 L 40,45 L 80,55 L 120,70 L 160,80 L 200,85 L 240,90 L 280,95 L 320,100 L 320,140 L 0,140 Z"
+            fill="url(#sleepGrad)"/>
+
+          <!-- 折线 -->
+          <polyline points="0,30 40,45 80,55 120,70 160,80 200,85 240,90 280,95 320,100"
+            fill="none" stroke="#F8A5C2" stroke-width="3" stroke-linecap="round"/>
+
+          <!-- 数据点 -->
+          <circle cx="0" cy="30" r="4" fill="white" stroke="#F8A5C2" stroke-width="2"/>
+          <circle cx="80" cy="55" r="4" fill="white" stroke="#F8A5C2" stroke-width="2"/>
+          <circle cx="160" cy="80" r="4" fill="white" stroke="#F8A5C2" stroke-width="2"/>
+          <circle cx="240" cy="90" r="4" fill="white" stroke="#F8A5C2" stroke-width="2"/>
+          <circle cx="320" cy="100" r="4" fill="white" stroke="#F8A5C2" stroke-width="2"/>
+
+          <!-- 目标线 -->
+          <line x1="0" y1="105" x2="320" y2="105" stroke="#4FD1C5" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.6"/>
+          <text x="315" y="120" font-size="9" fill="#4FD1C5" text-anchor="end">目标 10 分钟</text>
+
+          <!-- X 轴标签 -->
+          <text x="0" y="135" font-size="9" fill="rgba(0,0,0,0.5)">D1</text>
+          <text x="80" y="135" font-size="9" fill="rgba(0,0,0,0.5)">D3</text>
+          <text x="160" y="135" font-size="9" fill="rgba(0,0,0,0.5)">D5</text>
+          <text x="240" y="135" font-size="9" fill="rgba(0,0,0,0.5)">D7</text>
+          <text x="320" y="135" font-size="9" fill="rgba(0,0,0,0.5)" text-anchor="end">D9</text>
+        </svg>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-header">
+          <div class="insight-icon">💡</div>
+          <div class="insight-title">AI 智能解读</div>
+        </div>
+        <div class="insight-text">
+          本周入睡耗时持续下降，自主入睡能力初步建立 🎉。白天小觉仍不稳定，建议继续坚持小觉原则。宝宝对间接安抚法的适应良好，可考虑在 Day 5 适当拉长间隔到 12 分钟。
+        </div>
+      </div>
+
+      <div style="height:20px"></div>
+    </div>
+
+    <!-- 设置页 -->
+    <div class="page page-settings hidden" id="pageSettings">
+      <div class="settings-header">
+        <div class="settings-title">设置</div>
+      </div>
+
+      <!-- 宝宝档案 -->
+      <div class="baby-profile-card">
+        <div class="baby-profile-edit" onclick="openBabyEdit()">✏️ 编辑</div>
+        <div class="baby-profile-name" id="babyProfileName">👶 豆芽</div>
+        <div class="baby-profile-meta" id="babyProfileMeta">--</div>
+      </div>
+
+      <div class="cloud-account-card" onclick="openCloudAccount()" role="button" tabindex="0">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <div class="cloud-account-title">👨‍👩‍👧 家庭共享</div>
+          <span class="cloud-status-pill" id="cloudSyncStatus">本地模式</span>
+        </div>
+        <div class="cloud-account-subtitle" id="cloudAccountSummary">配置 Supabase 后，可让爸爸、妈妈和长辈实时共享同一个宝宝的记录。</div>
+      </div>
+
+      <!-- 训练方法模块 -->
+      <div class="train-method-section">
+        <div class="train-method-title">📚 训练方法设置</div>
+        <div class="train-method-row">
+          <label>训练方法</label>
+          <select id="trainMethodSelect">
+            <option value="indirect" selected>间接安抚法（推荐）</option>
+          </select>
+        </div>
+        <div class="train-method-row">
+          <label>训练开始日期</label>
+          <input type="date" id="trainStartDate" value="2026-08-03">
+        </div>
+        <div class="train-method-row">
+          <label>训练天数</label>
+          <input type="number" id="trainDays" value="14" min="14" max="14" readonly>
+        </div>
+        <div class="train-method-row">
+          <label>今晚安抚间隔（间接安抚法·分钟）</label>
+          <div style="font-size:13px; color:var(--primary); font-weight:600; padding:6px 0;" id="trainIntervalDisplay">--</div>
+        </div>
+        <div class="train-method-row">
+          <label>页面内提前提示</label>
+          <select id="remindPref">
+            <option value="5">入睡窗口提前 5 分钟提醒</option>
+            <option value="10" selected>入睡窗口提前 10 分钟提醒</option>
+            <option value="15">入睡窗口提前 15 分钟提醒</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 外观设置 -->
+      <div class="settings-section">
+        <div class="settings-title" style="padding:14px 16px 8px; font-size:14px; font-weight:600; color:var(--text-secondary);">🎨 外观</div>
+        <div class="settings-row">
+          <div class="settings-row-left">
+            <div class="settings-icon" style="background: rgba(26,26,26,0.1); color: var(--text-primary);">🌙</div>
+            <div>
+              <div class="settings-label">深色模式</div>
+              <div class="settings-value" id="darkModeStatus">跟随系统 · 当前开启</div>
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="darkModeToggle" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="settings-row settings-row-clickable" onclick="setDarkMode('system')">
+          <div class="settings-row-left">
+            <div class="settings-icon" style="background: rgba(26,26,26,0.1); color: var(--text-primary);">📱</div>
+            <div>
+              <div class="settings-label">跟随系统</div>
+              <div class="settings-value" id="darkModeSystemHint">默认 · 系统切换时自动跟随</div>
+            </div>
+          </div>
+          <span class="chevron" id="darkModeSystemMark" style="color:var(--primary);">✓</span>
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-left">
+            <div class="settings-icon" style="background:linear-gradient(135deg,#4F7FD9,#8DB9F4);">大</div>
+            <div>
+              <div class="settings-label">大字号模式</div>
+              <div class="settings-value" id="largeTextStatus">标准字号</div>
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="largeTextToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 其他 -->
+      <div class="settings-section">
+        <div class="settings-row settings-row-clickable" onclick="showToast('⏰ 已保存页面内提示偏好；Safari 后台无法保证准时提醒')">
+          <div class="settings-row-left">
+            <div class="settings-icon pink">⏰</div>
+            <div>
+              <div class="settings-label">提醒说明</div>
+              <div class="settings-value">页面内提示 · Safari 后台不保证提醒</div>
+            </div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+        <div class="settings-row settings-row-clickable" onclick="exportData()">
+          <div class="settings-row-left">
+            <div class="settings-icon yellow">📊</div>
+            <div>
+              <div class="settings-label">导出数据</div>
+              <div class="settings-value">保存为 JSON 备份文件</div>
+            </div>
+          </div>
+          <span class="chevron">📥</span>
+        </div>
+        <div class="settings-row settings-row-clickable" onclick="importData()">
+          <div class="settings-row-left">
+            <div class="settings-icon mint">📥</div>
+            <div>
+              <div class="settings-label">导入数据</div>
+              <div class="settings-value">从 JSON 文件恢复数据</div>
+            </div>
+          </div>
+          <span class="chevron">📤</span>
+        </div>
+        <div class="settings-row settings-row-clickable" onclick="clearAllData()">
+          <div class="settings-row-left">
+            <div class="settings-icon" style="background:rgba(255,107,107,0.15);color:#FF6B6B">🗑️</div>
+            <div>
+              <div class="settings-label" style="color:#FF6B6B">清除全部数据</div>
+              <div class="settings-value">不可恢复，建议先导出备份</div>
+            </div>
+          </div>
+          <span class="chevron" style="color:#FF6B6B">⚠️</span>
+        </div>
+        <div class="settings-row settings-row-clickable" onclick="showWidgetGuide()">
+          <div class="settings-row-left">
+            <div class="settings-icon purple">📱</div>
+            <div>
+              <div class="settings-label">添加到主屏幕</div>
+              <div class="settings-value">Safari 安装为独立应用</div>
+            </div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+        <div class="settings-row settings-row-clickable" onclick="showAbout()">
+          <div class="settings-row-left">
+            <div class="settings-icon" style="background:rgba(26,26,26,0.1);color:var(--text-primary)">ℹ️</div>
+            <div>
+              <div class="settings-label">关于</div>
+              <div class="settings-value">v2.3 · 家庭共享版</div>
+            </div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+      </div>
+
+      </div>
+
+      <div style="height:20px"></div>
+    </div>
+
+    <!-- 操作手册页（独立Tab） -->
+    <div class="page page-manual hidden" id="pageManual" style="padding-bottom:20px;">
+      <div class="settings-header"><div class="settings-title">操作手册</div></div>
+
+      <div class="manual-source-tabs">
+        <button class="manual-source-tab active" data-manual-source="plan" onclick="switchManualSource('plan')">📘 两周睡眠计划</button>
+        <button class="manual-source-tab" data-manual-source="aap" onclick="switchManualSource('aap')">🛡️ AAP 安全睡眠</button>
+      </div>
+
+      <div class="manual-source-panel" id="manualPlanPanel">
+
+      <div class="manual-intro">
+        <div class="manual-intro-title">先按顺序做，再按需要查</div>
+        <div class="manual-intro-text">第一次使用先看“每天怎么用”和“睡前怎么做”。遇到哭闹、早醒、夜奶或小觉问题时，再打开对应章节。</div>
+      </div>
+
+      <div class="collapse-section">
+        <div class="collapse-header open" onclick="toggleCollapse(this)">① 每天怎么使用应用<span class="collapse-badge" style="background:var(--primary);">先看</span><span class="arrow">▼</span></div>
+        <div class="collapse-body open">
+          <div class="manual-step"><span class="manual-step-num">1</span><span>宝宝起床或从小床抱起时，打开“快速记录”点一次对应按钮。</span></div>
+          <div class="manual-step"><span class="manual-step-num">2</span><span>开始喂奶、睡眠仪式、放下、入睡或哭闹时点一次；结束时再点一次。</span></div>
+          <div class="manual-step"><span class="manual-step-num">3</span><span>应用用开始与结束两个时间计算持续时长，不需要让网页一直开着。</span></div>
+          <div class="manual-step"><span class="manual-step-num">4</span><span>入睡后主页卡片变为蓝色并显示预计醒来时间；醒来后自动显示下一觉入睡窗口。</span></div>
+          <div class="manual-note">Safari 被系统关闭也没关系：开始记录已经保存。重新打开后，按钮仍显示对应的“结束”操作。</div>
+        </div>
+      </div>
+
+      <div class="collapse-section">
+        <div class="collapse-header open" onclick="toggleCollapse(this)">② 核心原则与睡前流程<span class="collapse-badge" style="background:#4F7FD9;">必读</span><span class="arrow">▼</span></div>
+        <div class="collapse-body open"><b>核心原则：</b>给豆芽足够时间学习自我安抚，照顾者用短暂、温和且一致的方式提供安全感。第1天保持原方式，第2天晚上开始执行间接安抚法。<br><br><b>睡前顺序：</b><br>① 提前10–20分钟安静缓冲<br>② 绘本或舒缓音乐<br>③ 换尿不湿、穿睡袋<br>④ 轻声说固定睡前语<br>⑤ 拉遮光帘、打开白噪音、关灯<br>⑥ 宝宝清醒放松时放入小床<br>⑦ 关门离开<br><br>夜觉仪式10–15分钟；小觉简化为5–10分钟。安抚巾只用于睡前互动，<b>放入婴儿床前取走</b>。</div>
+      </div>
+
+      <div class="collapse-section">
+        <div class="collapse-header" onclick="toggleCollapse(this)">③ 等待间隔表<span class="arrow">▼</span></div>
+        <div class="collapse-body"><b>间接安抚法：</b><br>第1天：3 / 5 / 7分钟<br>第2天：5 / 7 / 9分钟<br>第3天：7 / 9 / 12分钟<br>第4天：9 / 12 / 15分钟<br>第5天：12 / 15 / 18分钟<br>第6天：15 / 18 / 20分钟<br>第7天：18 / 20 / 25分钟<br>第8天起：25 / 30 / 30分钟<br><br>第8天起最长间隔为30分钟。这里的等待间隔是训练方法参数，<b>不是应用快速记录的持续时间</b>。</div>
+      </div>
+
+      <div class="collapse-section">
+        <div class="collapse-header" onclick="toggleCollapse(this)">④ 哭闹时怎么安抚<span class="arrow">▼</span></div>
+        <div class="collapse-body">• 宝宝安静时暂停等待；重新哭闹时重新计算本轮等待间隔<br>• 每次进入房间安抚不超过30秒，约15秒更合适，随后离开<br>• 不抱起、不长时间逗留，语气保持坚定温和<br>• 可以说固定短句：“妈妈爱你，现在是睡觉时间。”<br>• 所有照顾者保持相同做法<br>• 如需换大便尿布，只开低亮度暖色灯，安静快速完成</div>
+      </div>
+
+      <div class="collapse-section">
+        <div class="collapse-header" onclick="toggleCollapse(this)">⑤ 小觉安排<span class="arrow">▼</span></div>
+        <div class="collapse-body">• 前两觉：放床1小时仍未入睡则结束；短睡醒来可留床至满1小时<br>• 第三觉参考45分钟<br>• 黄昏觉参考30分钟，<b>最晚17:45结束</b><br>• 单次睡眠不超过2.5小时，白天总睡眠目标3.5–4.5小时<br>• 白天小觉通常比夜觉更难，需要更耐心地保持一致</div>
+      </div>
+
+      <div class="collapse-section">
+        <div class="collapse-header" onclick="toggleCollapse(this)">⑥ 晨醒与夜奶<span class="arrow">▼</span></div>
+        <div class="collapse-body"><b>晨醒：</b><br>• 6:30前醒来按夜醒处理<br>• 6:30后若安静可继续休息，尽量接近7:00起床<br>• 7:00仍在睡则唤醒，开始新的一天<br>• 凌晨4点后若安抚让宝宝更烦躁，可停止介入并观察至起床时间<br><br><b>夜奶：</b><br>• 暂保留2顿，合理间隔<br>• 奶点附近醒来先观察3分钟，不再入睡再喂<br>• 非奶点使用间接安抚法<br>• 喂奶保持安静、高效，喂后清醒放回小床<br>• 没有大便时不必反复换尿布</div>
+      </div>
+
+      <div class="collapse-section">
+        <div class="collapse-header" onclick="toggleCollapse(this)">⑦ 安全睡眠环境<span class="collapse-badge" style="background:#E85D75;">安全</span><span class="arrow">▼</span></div>
+        <div class="collapse-body">• 使用符合安全标准的婴儿床、摇篮或便携游戏床，床垫保持<b>坚实、平坦</b><br>• 宝宝仰卧，独立睡眠空间内不放枕头、被子、安抚巾、毛绒玩具等松软物品<br>• 白天小觉也尽量保持黑暗<br>• 白噪音设备距婴儿床1–2米，音量约50dB；调整前先实测<br>• 夜灯使用低亮度暖色，避免直射眼睛<br>• 室温参考20–22℃，根据后颈和背部体感调整睡袋厚度<br><div class="manual-note">安全睡眠优先遵循儿科医生及权威指南；训练建议不能替代医疗意见。</div></div>
+      </div>
+
+      <div class="collapse-section">
+        <div class="collapse-header" onclick="toggleCollapse(this)">⑧ 特殊情况与家长提醒<span class="arrow">▼</span></div>
+        <div class="collapse-body">• 每位照顾者使用相同流程，避免临时改变方法<br>• 每次睡眠结束后及时核对日志<br>• 调整期减少不必要外出，睡前至少1小时回家安静缓冲<br>• 出牙、生病或儿科医生建议暂停时，先暂停训练<br>• 连续14天尽量保持一致，但宝宝安全和健康始终优先<br>• 若出现呼吸异常、精神反应差、持续高热或喂养明显减少等情况，应及时联系医生</div>
+      </div>
+      </div>
+
+      <div class="manual-source-panel hidden-source" id="manualAapPanel">
+        <div class="manual-intro" style="background:linear-gradient(135deg,#137A72,#4FD1C5);">
+          <div class="manual-intro-title">AAP 婴儿安全睡眠要点</div>
+          <div class="manual-intro-text">依据 AAP 2022 年更新建议整理 · 适用于1岁以内婴儿 · 出生后前6个月为关键高危期</div>
+        </div>
+
+        <div class="collapse-section">
+          <div class="collapse-header open" onclick="toggleCollapse(this)">背景、核心数据与 ABCD<span class="collapse-badge" style="background:#137A72;">必读</span><span class="arrow">▼</span></div>
+          <div class="collapse-body open">
+            AAP 自1990年代推广“仰卧睡眠”后，美国 SIDS 死亡率下降约50%以上，但此后趋于平台。睡眠相关婴幼儿死亡（SUID，包含 SIDS、窒息、绞窄等）仍是婴儿期伤害性死亡的首要原因。
+            <ul class="manual-list"><li>美国每年约有3,500–3,700名婴儿死于睡眠相关死亡。</li><li>风险最高在出生后前6个月，高峰为2–4月龄；约90%的突发性意外婴儿死亡发生在6个月内。</li><li>非裔与美洲原住民/阿拉斯加原住民婴儿的 SUID 死亡率约为白人婴儿的2–3倍，反映更广泛的社会不平等。</li><li>2022版将重点从单一“SIDS”扩展为“睡眠相关死亡”，并新增倾斜睡眠面、家用监测设备、襁褓和紧急临时睡具指引。</li></ul>
+            <div class="manual-subtitle">ABCD 核心口诀</div>
+            <b>A - Alone：</b>独睡于自己的专属睡具<br><b>B - Back：</b>每次睡眠都从仰卧开始<br><b>C - Crib：</b>睡具坚实、平坦、无杂物<br><b>D - Don't smoke：</b>孕期和出生后远离烟草及二手烟
+            <div class="manual-note"><b>睡具黄金法则：</b>Firm 坚实 · Flat 平坦 · Bare 空旷无杂物 · Non-Inclined 无倾斜。</div>
+          </div>
+        </div>
+
+        <div class="collapse-section">
+          <div class="collapse-header" onclick="toggleCollapse(this)">一、安全睡眠环境布置<span class="arrow">▼</span></div>
+          <div class="collapse-body">
+            <div class="manual-subtitle">1. 仰卧睡眠</div>
+            <ul class="manual-list"><li>夜间长睡和白天小睡都应仰卧，持续至满1岁；侧卧不安全。习惯仰卧的宝宝偶尔改为侧/俯卧，风险可升高达45倍。</li><li>早产儿病情稳定后也应尽早改为仰卧。</li><li>能自主从仰卧翻到俯卧、并能翻回后，可保持自己选择的睡姿；若只会单向翻身，夜间翻成俯卧仍应帮助复位。</li><li>清醒且有人看护时的俯卧练习应继续进行。</li></ul>
+            <div class="manual-subtitle">2. 坚实、平坦、无倾斜</div>
+            <ul class="manual-list"><li>床垫受压后应迅速回弹、不凹陷。婴儿床、摇篮、便携床或游戏围栏应符合 CPSC 标准，床垫贴合、无下拉侧栏，栏杆间距小于2⅜英寸。</li><li>倾斜超过10度会使身体下滑、头部前倾而阻塞气道。</li><li>记忆棉、水床、充气床、软垫加厚床垫、羊皮褥等柔软表面均不安全。</li><li>汽车座椅、婴儿车、秋千、摇椅、背带和吊兜不用于常规睡眠，尤其是4月龄以下；若在车外睡着，应尽快移回正规睡具。</li></ul>
+            <div class="manual-subtitle">3. 空床原则</div>
+            <ul class="manual-list"><li>睡眠区只保留宝宝和一张贴合床单。</li><li>移除枕头、枕状玩具、被子、羽绒被、加垫、非贴合床单、毯子、毛绒玩具、床围及绑在床栏上的软物。</li><li>担心着凉可分层穿衣或使用合适的可穿戴毯/睡袋，不使用松散毯子；睡眠区远离绳带和电线。</li></ul>
+            <div class="manual-subtitle">4. 避免过热</div>
+            <ul class="manual-list"><li>参考室温约20–22°C，通常比同环境成人多穿一层即可。</li><li>出汗、胸口发烫、面色潮红提示可能过热；离院回家后普通室内不要戴帽子。</li><li>禁止加权毯、加权睡袋、加权襁褓或任何加权物品。</li></ul>
+            <div class="manual-subtitle">5. 襁褓</div>
+            <ul class="manual-list"><li>襁褓没有降低 SIDS 风险的证据；使用时必须始终仰卧并避免过热。</li><li>一旦出现翻身迹象（通常3–4月龄，也可能更早）立即停止襁褓，避免翻成俯卧后手臂被束缚、无法复位。</li></ul>
+          </div>
+        </div>
+
+        <div class="collapse-section">
+          <div class="collapse-header" onclick="toggleCollapse(this)">二、同室不同床<span class="arrow">▼</span></div>
+          <div class="collapse-body">
+            <ul class="manual-list"><li>宝宝在父母卧室内使用独立睡具，至少前6个月，理想情况持续到1岁；同室不同床可使 SIDS 风险降低多达50%。</li><li>把婴儿床或摇篮放在父母床边、伸手可及处，方便喂养、安抚与观察。</li><li>仅喂养或安抚时抱上成人床；成人准备睡觉前必须放回独立睡具。</li><li>若床上喂奶可能睡着，先移除宝宝周围的枕头、床单、毯子等软物；醒来后立即移回婴儿床。</li><li>“同室 room-sharing”与“同床 bed-sharing”风险不同：前者推荐，后者不推荐；避免使用含义模糊的“cosleeping”。</li></ul>
+            <div class="manual-good"><b>为什么同室而不同床：</b>同室便于观察、喂养和响应；共享睡眠表面并不提供保护，反而增加成人压覆、被褥覆盖和卡陷风险。</div>
+          </div>
+        </div>
+
+        <div class="collapse-section">
+          <div class="collapse-header" onclick="toggleCollapse(this)">三、危险场所、产品与风险分层<span class="arrow">▼</span></div>
+          <div class="collapse-body">
+            <div class="manual-subtitle">应避开的产品</div>
+            <div class="manual-table-wrap"><table class="manual-table"><thead><tr><th>类别</th><th>产品</th><th>主要风险</th></tr></thead><tbody>
+              <tr><td>倾斜睡眠产品</td><td>倾斜睡篮、婴儿窝/豆荚、躺垫、楔形垫、旅行/紧凑睡具</td><td>头部前倾、阻塞气道或翻出被困；美国法律已禁止制造销售倾斜超过10度的睡眠产品。</td></tr>
+              <tr><td>床围/防撞垫</td><td>床栏软垫</td><td>可能窒息或卡陷；现代床栏间距已标准化，美国法律已禁止销售。</td></tr>
+              <tr><td>定位器</td><td>睡眠定位器、止动楔</td><td>不能预防 SIDS，可能束缚或导致窒息。</td></tr>
+              <tr><td>哺乳枕</td><td>哺乳枕、软垫</td><td>柔软且并非睡眠设计。</td></tr>
+              <tr><td>加权物品</td><td>加权毯、睡袋、襁褓</td><td>AAP 明确不推荐放在或靠近睡眠中的婴儿。</td></tr>
+              <tr><td>家用监护</td><td>宣称防 SIDS 的心肺、心率或血氧仪</td><td>没有预防 SIDS 的证据，不能替代安全睡眠做法。</td></tr>
+              <tr><td>婴儿箱</td><td>硬纸盒睡具</td><td>不强制符合联邦安全标准且研究不足，只能在紧急无合格睡具时临时过渡。</td></tr>
+            </tbody></table></div>
+            <div class="manual-danger"><b>二手警示：</b>被禁的倾斜睡具和床围仍可能出现在二手店、亲友赠送或海淘渠道，使用前应查询 CPSC 召回和合规信息。</div>
+            <div class="manual-subtitle">绝对禁止的睡眠场所</div>
+            沙发、软扶手椅和软垫表面都不能用于婴儿独睡或与人同睡。在沙发或软椅上与人同睡，风险最高可增加67倍。发现宝宝在软表面睡着，应立即移回坚实平坦睡具。
+            <div class="manual-subtitle">同床风险分层（AAP 任何情况下均不推荐同床）</div>
+            <div class="manual-table-wrap"><table class="manual-table"><thead><tr><th>情境</th><th>相对风险</th></tr></thead><tbody><tr><td>宝宝小于4月龄时同床</td><td>5–10倍</td></tr><tr><td>同床者使用酒精、致困药物或物质（含烟草/大麻）</td><td>超过10倍</td></tr><tr><td>早产或低出生体重宝宝同床</td><td>2–5倍</td></tr><tr><td>非父母同床、软床垫或软寝具</td><td>风险叠加</td></tr><tr><td>沙发或软扶手椅同睡</td><td>最高67倍</td></tr></tbody></table></div>
+            <div class="manual-subtitle">物质与烟雾</div>
+            孕期及出生后避免尼古丁、酒精、大麻、阿片类和违禁药物暴露；家中和车内均保持无烟。吸烟是重要且可改变的 SIDS 风险因素之一。
+          </div>
+        </div>
+
+        <div class="collapse-section">
+          <div class="collapse-header" onclick="toggleCollapse(this)">四、11项常见误区<span class="arrow">▼</span></div>
+          <div class="collapse-body">
+            <div class="manual-myth"><b>1. 侧卧更安全、能防溢奶？</b><br>不正确。侧卧不安全；早产或有反流的宝宝也应仰卧。</div>
+            <div class="manual-myth"><b>2. 仰卧会让吐奶呛进气管？</b><br>仰卧不会增加误吸，气道结构和吞咽反射反而能提供保护；多数反流在4–6月龄自行改善，不使用楔形垫或定位器。</div>
+            <div class="manual-myth"><b>3. 床围能防止撞伤？</b><br>现代床栏间距已经标准化，床围不必要且可能造成窒息或卡陷；担心腿卡栏可使用合适尺码的可穿戴睡袋。</div>
+            <div class="manual-myth"><b>4. 倾斜睡具能治疗反流？</b><br>不推荐，倾斜会让头部前倾并阻塞气道。不要在床垫下塞毛巾或垫高床腿，反流问题应咨询儿科医生。</div>
+            <div class="manual-myth"><b>5. 襁褓可以一直使用？</b><br>出现翻身迹象立即停止；襁褓也没有降低 SIDS 风险的证据。</div>
+            <div class="manual-myth"><b>6. 家用心肺或血氧仪能预防 SIDS？</b><br>没有证据支持，不能替代安全睡眠环境；有医疗监测需求时遵医嘱。</div>
+            <div class="manual-myth"><b>7. 免费婴儿箱和正规婴儿床一样安全？</b><br>婴儿箱不强制符合联邦安全标准且证据不足，只能在紧急情况下临时过渡。</div>
+            <div class="manual-myth"><b>8. 夜里在沙发或大床喂奶睡着没关系？</b><br>这是最高风险场景。若可能在床上睡着，先清空宝宝周围软物，可设闹钟提醒；醒来立即放回婴儿床。</div>
+            <div class="manual-myth"><b>9. 怕冷应多穿并戴帽子？</b><br>通常比成人多一层即可；室内戴帽会增加过热风险。手脚偏凉可能正常，应摸颈部或胸口判断。</div>
+            <div class="manual-myth"><b>10. “cosleeping”就是安全亲子同睡？</b><br>该词含义模糊，应明确区分推荐的同室与不推荐的同床。</div>
+            <div class="manual-myth"><b>11. 市售防 SIDS 产品能保平安？</b><br>目前没有任何产品能预防 SIDS；定位器和楔形垫还会带来额外风险和虚假安全感。</div>
+          </div>
+        </div>
+
+        <div class="collapse-section">
+          <div class="collapse-header" onclick="toggleCollapse(this)">五、其他保护因素<span class="arrow">▼</span></div>
+          <div class="collapse-body">
+            <ul class="manual-list"><li><b>母乳喂养：</b>母乳或挤出的母乳与风险降低相关，纯母乳且时间越长保护越强；建议前6个月纯母乳，之后按双方意愿持续至1岁或更久，部分母乳喂养也有益。</li><li><b>安抚奶嘴：</b>小睡和夜间入睡时使用与风险降低相关；掉落后不必重新塞回。母乳喂养建立稳定（约3–4周）后再引入，不挂在颈部、衣物或小床上。</li><li><b>按时接种：</b>按计划完成儿童保健和常规免疫。</li><li><b>清醒俯卧：</b>出院后尽早在清醒、有人看护时开始，逐渐增加至7周龄每日累计15–30分钟，以促进运动发育并减少体位性扁头。</li><li><b>孕期保健：</b>规律且充分的产前保健与风险降低相关。</li><li><b>无烟无物质环境：</b>孕期和出生后远离烟草、酒精、大麻、阿片和违禁药物。</li></ul>
+            <div class="manual-note"><b>频繁夜醒：</b>宝宝每2–3小时醒来进食是正常且健康的生理现象，不要因此寻求危险产品或不安全睡姿。</div>
+          </div>
+        </div>
+
+        <div class="collapse-section">
+          <div class="collapse-header" onclick="toggleCollapse(this)">六、豆芽当前月龄提醒<span class="collapse-badge" style="background:#E8833A;">4月龄</span><span class="arrow">▼</span></div>
+          <div class="collapse-body"><ul class="manual-list"><li><b>翻身临界点：</b>每天留意翻身迹象，一旦出现立即停止襁褓，并确认睡眠区完全无松散寝具。</li><li><b>继续同室不同床：</b>前6个月风险最高，婴儿床仍放在卧室内伸手可及处，夜奶后放回独立睡具。</li><li><b>警惕喂奶睡着：</b>避免在沙发或软椅上抱睡，可设置闹钟提醒，并清空喂奶床面周围软物。</li><li><b>避免过热：</b>夏季特别注意室温和分层穿衣，室内不戴帽，以颈部或胸口温度判断。</li><li><b>奶嘴和俯卧练习：</b>若母乳已稳定可在入睡时使用安抚奶嘴；白天安排有人看护的清醒俯卧。</li><li>反流、早产史、呼吸或其他个体问题请咨询儿科医生。</li></ul></div>
+        </div>
+
+        <div class="collapse-section">
+          <div class="collapse-header" onclick="toggleCollapse(this)">七、资料来源与说明<span class="arrow">▼</span></div>
+          <div class="collapse-body">
+            <ul class="manual-list"><li>AAP 新闻稿：<i>American Academy of Pediatrics Updates Safe Sleep Recommendations: Back is Best</i>（2022-06-21）</li><li>Moon RY, Carlin RF, Hand I. <i>Sleep-Related Infant Deaths: Updated 2022 Recommendations for Reducing Infant Deaths in the Sleep Environment.</i> Pediatrics. 2022;150(1). DOI: 10.1542/peds.2022-057990</li><li>AAP 技术报告：<i>Evidence Base for 2022 Updated Recommendations for a Safe Infant Sleeping Environment</i>. DOI: 10.1542/peds.2022-057991</li><li>AAP / HealthyChildren：<i>How to Keep Your Sleeping Baby Safe: AAP Policy Explained</i></li><li>AAP / HealthyChildren：<i>Inclined Sleepers, Crib Bumpers & Other Baby Registry Items to Avoid</i></li><li>CDC：<i>Providing Care for Babies to Sleep Safely</i></li><li>NIH NICHD Safe to Sleep®：<i>Ways to Reduce Baby's Risk</i> 与 FAQs</li><li>美国《Safe Sleep for Babies Act》及 CPSC 婴幼儿睡眠产品联邦安全标准</li></ul>
+            <div class="manual-danger"><b>免责声明：</b>本页根据你提供的完整总结归纳，仅供家庭学习参考，不能替代专业医疗建议。具体喂养、睡姿和产品选择请遵从儿科医生的个体化指导。</div>
+            <a class="source-link" href="https://www.aap.org/en/patient-care/safe-sleep" target="_blank" rel="noopener noreferrer">查看 AAP 官方安全睡眠页面 ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:20px"></div>
+    </div>
+
+    <!-- 数据页（日志+分析） -->
+    <div class="page page-data hidden" id="pageData" style="padding-bottom:20px;">
+      <div class="settings-header"><div class="settings-title">数据</div></div>
+      <div class="segment-control" style="margin:0 20px 12px;">
+        <div class="segment-item active" data-sub="log">日志</div>
+        <div class="segment-item" data-sub="analytics">分析</div>
+      </div>
+      <div id="dataPanelLog" style="padding:0;"></div>
+      <div id="dataPanelAnalytics" style="display:none;"></div>
+      <div style="height:20px"></div>
+    </div>
+
+    <!-- 日志页（咨询师表格） -->
+    <div class="page page-log hidden" id="pageLog">
+      <div class="log-header">
+        <div class="log-title">每日睡眠日志</div>
+        <div class="log-subtitle">与咨询师表格一致 · 每项均可快速填写</div>
+      </div>
+
+      <div class="log-day-switcher" id="logDaySwitcher">
+        <div class="log-day-btn active">Day 3 · 今日</div>
+        <div class="log-day-btn">Day 2 ✓</div>
+        <div class="log-day-btn">Day 1 ✓</div>
+        <div class="log-day-btn">Day 4</div>
+        <div class="log-day-btn">Day 5</div>
+      </div>
+
+      <div class="overview-grid">
+        <div class="overview-card"><div class="overview-card-header">总睡眠 <span>目标10h</span></div><div class="overview-card-value">9h 12m</div><div class="overview-card-trend up">📈 +1.8h</div></div>
+        <div class="overview-card"><div class="overview-card-header">哭闹 <span>3次</span></div><div class="overview-card-value">14min</div><div class="overview-card-trend down">📉 -8min</div></div>
+        <div class="overview-card"><div class="overview-card-header">喂养 <span>6次</span></div><div class="overview-card-value">480ml</div><div class="overview-card-trend up">📈 +60ml</div></div>
+        <div class="overview-card"><div class="overview-card-header">自主入睡 <span>🏆</span></div><div class="overview-card-value">2/3</div><div class="overview-card-trend up">📈 +1次</div></div>
+      </div>
+
+      <!-- 晨醒 -->
+      <div class="log-section">
+        <div class="log-section-title">☀️ <span class="log-section-badge morning">晨醒</span></div>
+        <div class="log-section-grid single">
+          <div class="log-row"><span class="log-field-label">早上醒来</span><span class="log-field-value"><input class="log-field-entry" placeholder="输入时间…" value="07:00"></span></div>
+          <div class="log-row"><span class="log-field-label">抱起时间</span><span class="log-field-value"><input class="log-field-entry" placeholder="输入时间…" value="07:03"></span></div>
+        </div>
+      </div>
+
+      <!-- 小觉1 -->
+      <div class="log-section"><div class="log-section-title">🌙 小觉1 <span class="log-ww">WW: 1h15m</span></div>
+        <div class="log-section-grid">
+          <div class="log-row"><span class="log-field-label">上床时间</span><span class="log-field-value"><input class="log-field-entry" value="08:20"></span></div>
+          <div class="log-row"><span class="log-field-label">睡着时间</span><span class="log-field-value"><input class="log-field-entry" value="08:28"></span></div>
+          <div class="log-row"><span class="log-field-label">抱起时间</span><span class="log-field-value"><input class="log-field-entry" value="09:35"></span></div>
+          <div class="log-row"><span class="log-field-label">入睡过程</span><span class="log-field-value"><input class="log-field-entry" value="自行入睡·8min"></span></div>
+        </div></div>
+
+      <!-- 小觉2 -->
+      <div class="log-section"><div class="log-section-title">🌙 小觉2 <span class="log-ww">WW: 1h30m</span></div>
+        <div class="log-section-grid">
+          <div class="log-row"><span class="log-field-label">上床时间</span><span class="log-field-value"><input class="log-field-entry" value="11:05"></span></div>
+          <div class="log-row"><span class="log-field-label">睡着时间</span><span class="log-field-value"><input class="log-field-entry" value="11:17"></span></div>
+          <div class="log-row"><span class="log-field-label">抱起时间</span><span class="log-field-value"><input class="log-field-entry" value="12:45"></span></div>
+          <div class="log-row"><span class="log-field-label">入睡过程</span><span class="log-field-value"><input class="log-field-entry" value="拍睡·12min"></span></div>
+        </div></div>
+
+      <!-- 小觉3 -->
+      <div class="log-section"><div class="log-section-title">🌙 小觉3 <span class="log-ww">WW: --</span></div>
+        <div class="log-section-grid">
+          <div class="log-row"><span class="log-field-label">上床时间</span><span class="log-field-value"><input class="log-field-entry" placeholder="--:--"></span></div>
+          <div class="log-row"><span class="log-field-label">睡着时间</span><span class="log-field-value"><input class="log-field-entry" placeholder="--:--"></span></div>
+          <div class="log-row"><span class="log-field-label">抱起时间</span><span class="log-field-value"><input class="log-field-entry" placeholder="--:--"></span></div>
+          <div class="log-row"><span class="log-field-label">入睡过程</span><span class="log-field-value"><input class="log-field-entry" placeholder="自行入睡/拍睡/安抚…"></span></div>
+        </div></div>
+
+      <!-- 黄昏觉 -->
+      <div class="log-section"><div class="log-section-title">🌅 黄昏觉 <span class="log-ww">WW: --</span></div>
+        <div class="log-section-grid">
+          <div class="log-row"><span class="log-field-label">放下时间</span><span class="log-field-value"><input class="log-field-entry" placeholder="--:--"></span></div>
+          <div class="log-row"><span class="log-field-label">睡着时间</span><span class="log-field-value"><input class="log-field-entry" placeholder="--:--"></span></div>
+          <div class="log-row"><span class="log-field-label">抱起时间</span><span class="log-field-value"><input class="log-field-entry" placeholder="--:--"></span></div>
+          <div class="log-row"><span class="log-field-label">入睡过程</span><span class="log-field-value"><input class="log-field-entry" placeholder="自行入睡/拍睡/安抚…"></span></div>
+        </div></div>
+
+      <!-- 夜觉 -->
+      <div class="log-section"><div class="log-section-title">🌜 夜觉 <span class="log-ww">WW: 1h45m</span></div>
+        <div class="log-section-grid">
+          <div class="log-row"><span class="log-field-label">睡眠仪式</span><span class="log-field-value"><input class="log-field-entry" value="19:10"></span></div>
+          <div class="log-row"><span class="log-field-label">放下时间</span><span class="log-field-value"><input class="log-field-entry" value="19:25"></span></div>
+          <div class="log-row"><span class="log-field-label">睡着时间</span><span class="log-field-value"><input class="log-field-entry" value="19:32"></span></div>
+          <div class="log-row"><span class="log-field-label">入睡过程</span><span class="log-field-value"><input class="log-field-entry" value="自行入睡·7min"></span></div>
+        </div></div>
+
+      <!-- 夜醒 -->
+      <div class="log-section"><div class="log-section-title">🔔 夜醒情况 <span style="font-size:11px;font-weight:400;color:var(--text-secondary)">（哭闹≥5min未睡回 = 1次夜醒）</span></div>
+        <div id="nightWakings">
+          <div class="log-night-row"><span>#1 醒</span><input value="00:30"><span>入睡方式</span><input value="安抚·轻拍" style="width:80px"><span>喂奶</span><input value="--" style="width:40px"></div>
+          <div class="log-night-row"><span>#2 醒</span><input value="03:15"><span>入睡方式</span><input value="喂夜奶" style="width:80px"><span>喂奶</span><input value="80ml" style="width:40px"></div>
+        </div>
+        <div class="log-add-btn" onclick="addNightWaking()">+ 添加夜醒</div></div>
+
+      <div class="insight-card" style="text-align:center;margin-top:12px;">
+        <div style="font-weight:600;margin-bottom:4px;">💡 提示</div>
+        <div style="font-size:12px;color:var(--text-secondary);">可直接对照咨询师表格填写 · 数据自动同步</div>
+      </div>
+
+      <div style="height:20px"></div>
+    </div>
+
+    <!-- TabBar -->
+    <div class="tab-bar" id="tabBar">
+      <div class="tab-item active" data-tab="timeline"><div class="icon">🏠</div><div>时间轴</div></div>
+      <div class="tab-item" data-tab="manual"><div class="icon">📖</div><div>操作手册</div></div>
+      <div class="tab-fab" id="fabRecord">+</div>
+      <div class="tab-item" data-tab="data"><div class="icon">📊</div><div>数据</div></div>
+      <div class="tab-item" data-tab="settings"><div class="icon">⚙️</div><div>设置</div></div>
+    </div>
+
+    <!-- 宝宝信息编辑弹层 -->
+    <div class="modal-overlay" id="babyEditOverlay"></div>
+    <div class="modal-bottom-sheet" id="babyEditSheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">编辑宝宝信息</div>
+      <div style="padding:0 0 16px;">
+        <div class="log-row"><span class="log-field-label">姓名</span><span class="log-field-value"><input class="log-field-entry" id="babyNameEdit" style="font-size:14px;"></span></div>
+        <div class="log-row"><span class="log-field-label">性别</span><span class="log-field-value"><select id="babyGenderEdit" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(26,26,26,0.1);font-size:14px;"><option value="">不填</option><option value="男">男宝</option><option value="女">女宝</option></select></span></div>
+        <div class="log-row"><span class="log-field-label">出生日期</span><span class="log-field-value"><input type="date" id="babyBirthEdit" class="log-field-entry" style="font-size:14px;"></span></div>
+        <div class="log-row"><span class="log-field-label">训练开始</span><span class="log-field-value"><input type="date" id="trainStartEdit" class="log-field-entry" style="font-size:14px;"></span></div>
+      </div>
+      <button class="btn-confirm" onclick="saveBabyProfile()">保存</button>
+    </div>
+
+    <!-- 快速记录弹层 -->
+    <div class="modal-overlay" id="cloudAccountOverlay"></div>
+    <div class="modal-bottom-sheet" id="cloudAccountSheet" style="max-height:86%;overflow-y:auto;">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">家庭账号与同步</div>
+      <div id="cloudConfigHint" class="recent-action-hint" style="margin-bottom:14px;">当前为本地模式。填写 config.js 中的 Supabase 地址和公开密钥后即可启用登录。</div>
+      <div id="cloudSignedOut">
+        <div class="form-field"><div class="form-label">宝宝ID号（登录已有家庭）</div><input type="text" class="form-input" id="cloudBabyId" placeholder="输入数字ID" autocomplete="username" autocapitalize="none"></div>
+        <div class="form-field"><div class="form-label">密码</div><input type="password" class="form-input" id="cloudPassword" placeholder="家庭共同密码" autocomplete="current-password"></div>
+        <button class="btn-confirm" onclick="cloudLogin()">登录家庭</button>
+
+        <div style="text-align:center;color:var(--text-secondary);font-size:12px;margin:16px 0;">首次使用？创建新家庭 ⬇</div>
+        <div class="form-field"><div class="form-label">家庭名称</div><input class="form-input" id="cloudFamilyName" placeholder="例如：豆芽之家"></div>
+        <div class="form-field"><div class="form-label">宝宝名字</div><input class="form-input" id="cloudBabyName" placeholder="例如：豆芽"></div>
+
+        <div class="card-generated" id="cloudGeneratedCard" style="display:none;margin-bottom:12px;padding:14px;background:rgba(79,209,197,0.08);border-radius:14px;border:1px solid rgba(79,209,197,0.2);">
+          <div class="form-field" style="margin-bottom:10px;">
+            <div class="form-label" style="margin-bottom:4px;">自动生成的宝宝ID号 <span style="font-size:11px;color:var(--text-tertiary);">（点击复制分享给家人）</span></div>
+            <div class="copy-row" style="display:flex;align-items:center;gap:8px;">
+              <code class="generated-val" id="cloudGeneratedId" style="flex:1;padding:10px 12px;background:rgba(255,255,255,0.7);border-radius:10px;font-size:22px;font-weight:800;letter-spacing:4px;text-align:center;user-select:all;">--</code>
+              <button class="btn-copy" onclick="copyToClipboard('cloudGeneratedId')" style="flex:0 0 auto;padding:10px 14px;background:var(--mint);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">复制</button>
+            </div>
+          </div>
+          <div class="form-field">
+            <div class="form-label" style="margin-bottom:4px;">自动生成的密码 <span style="font-size:11px;color:var(--text-tertiary);">（点击复制）</span></div>
+            <div class="copy-row" style="display:flex;align-items:center;gap:8px;">
+              <code class="generated-val" id="cloudGeneratedPw" style="flex:1;padding:10px 12px;background:rgba(255,255,255,0.7);border-radius:10px;font-size:16px;font-weight:700;letter-spacing:2px;text-align:center;user-select:all;">--</code>
+              <button class="btn-copy" onclick="copyToClipboard('cloudGeneratedPw')" style="flex:0 0 auto;padding:10px 14px;background:var(--mint);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">复制</button>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-secondary" onclick="generateCredentials()" style="margin-bottom:10px;width:100%;padding:12px;background:transparent;border:1px dashed rgba(26,26,26,0.2);border-radius:14px;color:var(--text-secondary);font-size:13px;cursor:pointer;">🔄 重新生成ID和密码</button>
+        <button class="btn-confirm" style="background:linear-gradient(135deg,#4FD1C5,#2CB7AB);" onclick="cloudCreateHousehold()">创建家庭</button>
+        <div class="recent-action-hint" style="margin-top:10px;">💡 ID 和密码请保存好并分享给家人；家人用同一组凭据登录即可共享记录。</div>
+      </div>
+      <div id="cloudSignedIn" style="display:none;">
+        <div class="recent-action-hint" id="cloudUserEmail" style="margin-bottom:12px;"></div>
+        <div class="form-field"><div class="form-label">本机显示姓名（记录者）</div><input class="form-input" id="cloudDisplayName" placeholder="例如：妈妈"></div>
+        <div class="form-field"><div class="form-label">本机身份</div><select class="form-input" id="cloudIdentity"><option value="editor">编辑者（可记录/修改）</option><option value="viewer">查看者（只读）</option></select></div>
+        <button class="btn-confirm" onclick="saveCloudIdentity()">保存本机身份</button>
+        <div id="cloudFamilyInfo" class="recent-action-hint" style="display:block;margin-top:14px;"></div>
+        <button onclick="cloudSignOut()" style="width:100%;padding:14px;margin-top:14px;color:#E85D75;font-size:14px;font-weight:700;">退出登录</button>
+      </div>
+    </div>
+
+    <!-- 身份选择弹窗（新设备首次） -->
+    <div class="modal-overlay" id="identityPickerOverlay"></div>
+    <div class="modal-bottom-sheet" id="identityPickerSheet" style="max-height:60%;">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">选择本机身份</div>
+      <div class="recent-action-hint" style="margin-bottom:14px;">这台设备以哪种身份使用？可随时在设置里修改。</div>
+      <div class="form-field"><div class="form-label">显示姓名</div><input class="form-input" id="identityPickerName" placeholder="例如：妈妈"></div>
+      <button class="btn-confirm" onclick="chooseIdentity('editor')">编辑者（可记录 / 修改）</button>
+      <button class="btn-confirm" style="margin-top:10px;background:linear-gradient(135deg,#8B7ED8,#B5A9F2);" onclick="chooseIdentity('viewer')">查看者（只读）</button>
+    </div>
+
+    <div class="modal-overlay" id="quickRecordOverlay"></div>
+    <div class="modal-bottom-sheet" id="quickRecordSheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">快速记录 <span style="font-size:11px;color:var(--text-secondary)">第一次记开始 · 第二次记结束</span></div>
+
+      <div class="quick-actions" style="grid-template-columns: repeat(3,1fr); gap: 10px;">
+        <!-- 1. 喂养（单击切换：开始/结束） -->
+        <div class="quick-action" data-toggle="feed">
+          <div class="quick-action-btn feed-toggle" id="feedToggleBtn">🍼</div>
+          <div class="quick-action-label" id="feedToggleLabel">喂奶开始</div>
+          <div class="quick-action-status" id="feedStatus" style="display:none">已开始</div>
+        </div>
+        <!-- 2. 仪式开始 ⇄ 仪式结束 -->
+        <div class="quick-action" data-toggle="ritual">
+          <div class="quick-action-btn ritual-toggle" id="ritualToggleBtn">📚</div>
+          <div class="quick-action-label" id="ritualToggleLabel">仪式开始</div>
+          <div class="quick-action-status" id="ritualStatus" style="display:none">已开始</div>
+        </div>
+        <!-- 3. 放下 ⇄ 抱起 -->
+        <div class="quick-action" data-toggle="putdown">
+          <div class="quick-action-btn putdown-toggle" id="putdownToggleBtn">🛏️</div>
+          <div class="quick-action-label" id="putdownToggleLabel">放下</div>
+          <div class="quick-action-status" id="putdownStatus" style="display:none">已开始</div>
+        </div>
+        <!-- 4. 入睡 ⇄ 醒来 -->
+        <div class="quick-action" data-toggle="nap">
+          <div class="quick-action-btn nap-toggle" id="napToggleBtn">🌙</div>
+          <div class="quick-action-label" id="napToggleLabel">入睡</div>
+          <div class="quick-action-status" id="napStatus" style="display:none">已开始</div>
+        </div>
+        <!-- 5. 哭闹开始 ⇄ 哭闹结束 -->
+        <div class="quick-action" data-toggle="cry">
+          <div class="quick-action-btn cry-toggle" id="cryToggleBtn">🥺</div>
+          <div class="quick-action-label" id="cryToggleLabel">哭闹开始</div>
+          <div class="quick-action-status" id="cryStatus" style="display:none">已开始</div>
+        </div>
+        <!-- 6. 安抚（每次点击记录一次） -->
+        <div class="quick-action" data-action="soothe">
+          <div class="quick-action-btn soothe-toggle">🤗</div>
+          <div class="quick-action-label">安抚</div>
+          <div class="quick-action-counter" id="sootheCounter">今日 0 次</div>
+        </div>
+      </div>
+
+      <div class="recent-action-hint" id="actionHint">
+        💡 <strong>状态记录：</strong>喂奶、仪式、放下、入睡和哭闹均为“开始⇄结束”<br>
+        🛡️ <strong>关闭也保留：</strong>开始时间立即保存，Safari 被关闭后再次打开仍可继续点“结束”<br>
+        📊 <strong>单击记录：</strong>安抚（每点一次 = 一次记录）
+      </div>
+    </div>
+
+    <!-- 事件详情弹层 -->
+    <div class="modal-overlay" id="eventDetailOverlay"></div>
+    <div class="modal-bottom-sheet" id="eventDetailSheet">
+      <div class="sheet-handle"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div class="sheet-title" style="text-align:left;margin:0;">事件详情</div>
+        <button onclick="deleteEvent()" style="color:#FF6B6B;font-size:13px;font-weight:600;">删除</button>
+      </div>
+
+      <div id="eventDetailContent" style="font-size:14px;">
+        <div class="log-row"><span class="log-field-label">类型</span><span class="log-field-value" id="detailType">--</span></div>
+        <div class="log-row"><span class="log-field-label">日期</span><span class="log-field-value"><input type="date" class="log-field-entry" id="detailDate" style="font-size:14px;"></span></div>
+        <div class="log-row"><span class="log-field-label">时间</span><span class="log-field-value"><input type="time" class="log-field-entry" id="detailTime" style="font-size:14px;"></span></div>
+        <div class="log-row"><span class="log-field-label">持续时间</span><span class="log-field-value" id="detailDuration" style="font-weight:600;color:#4F7FD9;">--</span></div>
+        <div class="log-row"><span class="log-field-label">备注</span><span class="log-field-value"><input class="log-field-entry" id="detailNote" placeholder="添加备注…" style="font-size:14px;"></span></div>
+        <div id="detailExtra"></div>
+      </div>
+
+      <button class="btn-confirm" onclick="saveEventDetail()" style="margin-top:16px;">保存修改</button>
+    </div>
+
+    <!-- 哭闹强度选择 -->
+    <div class="cry-picker-overlay" id="cryPickerOverlay">
+      <div class="cry-picker">
+        <h3>这次哭闹的强度？</h3>
+
+        <div class="cry-summary" id="crySummary">
+          哭闹时长: <strong>2 分钟 15 秒</strong> · 开始于 10:30
+        </div>
+
+        <div class="cry-intensity-options">
+          <div class="cry-intensity-btn selected" data-intensity="1">
+            <div class="cry-intensity-num">1</div>
+            <div class="cry-intensity-emoji">😌</div>
+          </div>
+          <div class="cry-intensity-btn" data-intensity="2">
+            <div class="cry-intensity-num">2</div>
+            <div class="cry-intensity-emoji">😣</div>
+          </div>
+          <div class="cry-intensity-btn" data-intensity="3">
+            <div class="cry-intensity-num">3</div>
+            <div class="cry-intensity-emoji">😭</div>
+          </div>
+          <div class="cry-intensity-btn" data-intensity="4">
+            <div class="cry-intensity-num">4</div>
+            <div class="cry-intensity-emoji">😱</div>
+          </div>
+          <div class="cry-intensity-btn" data-intensity="5">
+            <div class="cry-intensity-num">5</div>
+            <div class="cry-intensity-emoji">🆘</div>
+          </div>
+        </div>
+
+        <div style="text-align:center; font-size:11px; color:var(--text-secondary); margin-bottom:16px;">
+          1-哼唧 · 2-小声 · 3-大哭 · 4-剧烈 · 5-尖叫
+        </div>
+
+        <div class="cry-tags">
+          <div class="cry-tag" data-tag="overtired">😫 过疲</div>
+          <div class="cry-tag" data-tag="hungry">🍼 饥饿</div>
+          <div class="cry-tag" data-tag="gas">💨 胀气</div>
+          <div class="cry-tag" data-tag="environment">🌡️ 环境</div>
+          <div class="cry-tag" data-tag="teething">🦷 长牙</div>
+          <div class="cry-tag" data-tag="other">❓ 其他</div>
+        </div>
+
+        <button class="btn-confirm" id="confirmCry">确认记录</button>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"><span class="toast-icon">✓</span><span id="toastText">记录成功</span></div>
+  </div>
+</div>
+
+<script>
+  // ============ localStorage 持久化 ============
+  const STORAGE_KEY = 'babysleep_events';
+  function loadEvents() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      return Array.isArray(stored) ? stored.map(normalizeEvent).filter(Boolean) : [];
+    } catch (e) {
+      console.warn('睡眠数据读取失败，已使用空数据。', e);
+      return [];
+    }
+  }
+  function saveEvents() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+    window.CloudSync?.queueSync?.(events);
+  }
+
+  function toTimestamp(value) {
+    if (value instanceof Date) return value.getTime();
+    if (typeof value === 'number') return Number.isFinite(value) ? value : NaN;
+    if (typeof value === 'string' && value.trim() !== '') {
+      const numeric = Number(value);
+      if (Number.isFinite(numeric)) return numeric;
+      const parsed = Date.parse(value);
+      return Number.isFinite(parsed) ? parsed : NaN;
+    }
+    return NaN;
+  }
+
+  function normalizeEvent(event) {
+    if (!event || typeof event !== 'object') return null;
+    const ts = toTimestamp(event.ts);
+    if (!Number.isFinite(ts)) return null;
+    const normalized = { ...event, ts };
+    normalized.id = String(normalized.id || ('e' + ts + Math.random().toString(36).slice(2, 7)));
+    normalized.time = normalized.time || new Date(ts).toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
+    normalized.title = String(normalized.title || '记录');
+    normalized.detail = String(normalized.detail || '');
+    return normalized;
+  }
+
+  function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>'"]/g, char => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;'
+    })[char]);
+  }
+
+  let events = loadEvents();
+  if (false && events.length === 0) {
+    // 历史演示数据保留在源码中供开发调试，但生产环境不再自动写入。
+    const now = Date.now();
+    const dayMs = 86400000;
+    const makeTS = (dayOffset, h, m) => {
+      const d = new Date(now - dayOffset * dayMs);
+      d.setHours(h, m, 0, 0);
+      return d.getTime();
+    };
+    const fmtT = (ts) => new Date(ts).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+
+    // Day 3 (今日)
+    const d3 = [
+      { type:'nap_start', title:'起床', detail:'被唤醒·精神状态好', ts:makeTS(0,7,0) },
+      { type:'feed_start', title:'喂奶开始', detail:'母乳', ts:makeTS(0,7,10) },
+      { type:'feed_end', title:'喂奶结束', detail:'15分钟', ts:makeTS(0,7,25) },
+      { type:'ritual_start', title:'仪式开始', detail:'小觉简化仪式', ts:makeTS(0,8,10) },
+      { type:'ritual_end', title:'仪式结束', detail:'5分钟', ts:makeTS(0,8,15) },
+      { type:'putdown_start', title:'放下', detail:'放入婴儿床', ts:makeTS(0,8,18) },
+      { type:'nap_start', title:'第一觉入睡', detail:'自行入睡·耗时8min·crib', ts:makeTS(0,8,26) },
+      { type:'nap_end', title:'第一觉醒', detail:'自然醒·1h9m', ts:makeTS(0,9,35) },
+      { type:'putdown_end', title:'抱起', detail:'起床仪式', ts:makeTS(0,9,36) },
+      { type:'feed_start', title:'喂奶开始', detail:'配方奶', ts:makeTS(0,9,40) },
+      { type:'feed_end', title:'喂奶结束', detail:'120ml', ts:makeTS(0,9,55) },
+      { type:'soothe', title:'安抚', detail:'轻拍·1次', ts:makeTS(0,10,10) },
+      { type:'nap_start', title:'第二觉入睡', detail:'拍睡·耗时12min·crib', ts:makeTS(0,11,17) },
+      { type:'nap_end', title:'第二觉醒', detail:'自然醒·1h28m', ts:makeTS(0,12,45) },
+      { type:'feed_start', title:'喂奶开始', detail:'母乳·⚠️迷糊奶', ts:makeTS(0,12,50) },
+      { type:'feed_end', title:'喂奶结束', detail:'12分钟', ts:makeTS(0,13,2) },
+      { type:'soothe', title:'安抚', detail:'唱歌·1次', ts:makeTS(0,13,5) },
+      { type:'cry_start', title:'哭闹开始', detail:'胀气', ts:makeTS(0,13,15) },
+      { type:'cry', title:'哭闹', detail:'3分钟·强度2·😣·胀气', intensity:2, tags:['胀气'], ts:makeTS(0,13,18) },
+      { type:'soothe', title:'安抚', detail:'轻拍·1次', ts:makeTS(0,13,20) },
+      { type:'feed_start', title:'喂奶开始', detail:'配方奶', ts:makeTS(0,13,30) },
+      { type:'feed_end', title:'喂奶结束', detail:'90ml', ts:makeTS(0,13,42) },
+      // 夜觉 (Day 3 晚间)
+      { type:'ritual_start', title:'仪式开始', detail:'夜间仪式', ts:makeTS(0,19,10) },
+      { type:'ritual_end', title:'仪式结束', detail:'12分钟', ts:makeTS(0,19,22) },
+      { type:'putdown_start', title:'放下', detail:'夜觉放床', ts:makeTS(0,19,25) },
+      { type:'nap_start', title:'夜觉入睡', detail:'自行入睡·7min·crib', ts:makeTS(0,19,32), night:true },
+      { type:'nap_end', title:'夜觉醒', detail:'自然醒', ts:makeTS(0,6,55) },
+    ];
+
+    // Day 2 (昨日)
+    const d2 = [
+      { type:'nap_start', title:'起床', detail:'自然醒·状态好', ts:makeTS(1,6,50) },
+      { type:'feed_start', title:'喂奶开始', detail:'母乳', ts:makeTS(1,7,0) },
+      { type:'feed_end', title:'喂奶结束', detail:'18分钟', ts:makeTS(1,7,18) },
+      { type:'nap_start', title:'第一觉入睡', detail:'自行入睡·耗时10min', ts:makeTS(1,8,30) },
+      { type:'nap_end', title:'第一觉醒', detail:'哭醒·50min', ts:makeTS(1,9,20) },
+      { type:'soothe', title:'安抚', detail:'轻拍·2次', ts:makeTS(1,9,25) },
+      { type:'feed_start', title:'喂奶开始', detail:'配方奶', ts:makeTS(1,9,30) },
+      { type:'feed_end', title:'喂奶结束', detail:'100ml', ts:makeTS(1,9,45) },
+      { type:'nap_start', title:'第二觉入睡', detail:'抱睡·耗时20min', ts:makeTS(1,11,0) },
+      { type:'nap_end', title:'第二觉醒', detail:'自然醒·1h15m', ts:makeTS(1,12,15) },
+      { type:'cry_start', title:'哭闹开始', detail:'过疲', ts:makeTS(1,13,0) },
+      { type:'cry', title:'哭闹', detail:'8分钟·强度4·😱·过疲', intensity:4, tags:['过疲'], ts:makeTS(1,13,8) },
+      { type:'soothe', title:'安抚', detail:'轻拍+唱歌·3次', ts:makeTS(1,13,10) },
+    ];
+
+    // Day 1 (前日)
+    const d1 = [
+      { type:'nap_start', title:'起床', detail:'被唤醒', ts:makeTS(2,7,0) },
+      { type:'feed_start', title:'喂奶开始', detail:'母乳', ts:makeTS(2,7,5) },
+      { type:'feed_end', title:'喂奶结束', detail:'20分钟', ts:makeTS(2,7,25) },
+      { type:'nap_start', title:'第一觉入睡', detail:'抱睡·耗时25min', ts:makeTS(2,8,50) },
+      { type:'nap_end', title:'第一觉醒', detail:'自然醒·55min', ts:makeTS(2,9,45) },
+      { type:'cry_start', title:'哭闹开始', detail:'饥饿', ts:makeTS(2,10,0) },
+      { type:'cry', title:'哭闹', detail:'10分钟·强度5·🆘·饥饿', intensity:5, tags:['饥饿'], ts:makeTS(2,10,10) },
+      { type:'feed_start', title:'喂奶开始', detail:'配方奶', ts:makeTS(2,10,15) },
+      { type:'feed_end', title:'喂奶结束', detail:'150ml', ts:makeTS(2,10,35) },
+      { type:'nap_start', title:'第二觉入睡', detail:'奶睡·耗时5min', ts:makeTS(2,11,30) },
+      { type:'nap_end', title:'第二觉醒', detail:'哭醒·40min', ts:makeTS(2,12,10) },
+    ];
+
+    const allEvents = [...d1, ...d2, ...d3];
+    events = allEvents.map((e, i) => ({
+      ...e,
+      id: 'e' + (Date.now() - 100000 + i),
+      time: e.time || fmtT(e.ts)
+    }));
+    events.sort((a, b) => a.ts - b.ts);
+    saveEvents();
+  }
+
+  let currentDetailEventId = null;
+  let pendingCryDurationText = '';
+
+  // ============ 通用 Toggle 系统 ============
+  const toggles = {
+    feed:   { active: false, startTime: null, sessionId:null, labelOn: '喂奶开始', labelOff: '喂奶结束', iconOn: '🍼', iconOff: '🍼', startToast: '🍼 喂奶开始时间已保存', endToast: '🍼 喂奶已结束', prefix: 'feed' },
+    ritual: { active: false, startTime: null, sessionId:null, labelOn: '仪式开始', labelOff: '仪式结束', iconOn: '📚', iconOff: '📚', startToast: '📚 仪式开始时间已保存', endToast: '📚 仪式结束已记录', prefix: 'ritual' },
+    putdown:{ active: false, startTime: null, sessionId:null, labelOn: '放下', labelOff: '抱起', iconOn: '🛏️', iconOff: '🛏️', startToast: '🛏️ 放下时间已保存', endToast: '🛏️ 抱起已记录', prefix: 'putdown' },
+    nap:    { active: false, startTime: null, sessionId:null, labelOn: '入睡', labelOff: '醒来', iconOn: '🌙', iconOff: '🌙', startToast: '🌙 入睡时间已保存', endToast: '🌙 醒来已记录', prefix: 'nap' },
+    cry:    { active: false, startTime: null, sessionId:null, labelOn: '哭闹开始', labelOff: '哭闹结束', iconOn: '🥺', iconOff: '🥺', startToast: '🥺 哭闹开始时间已保存', endToast: null, prefix: 'cry' }
+  };
+
+  function getToggle(key) { return toggles[key]; }
+
+  function restoreToggleStates() {
+    Object.keys(toggles).forEach(key => {
+      const startType = key === 'cry' ? 'cry_start' : key + '_start';
+      const endTypes = key === 'cry' ? ['cry', 'cry_end'] : [key + '_end'];
+      const starts = events.filter(event => event.type === startType && (key !== 'nap' || isSleepStart(event))).sort((a,b) => b.ts-a.ts);
+      const ends = events.filter(event => endTypes.includes(event.type)).sort((a,b) => b.ts-a.ts);
+      const lastStart = starts[0];
+      const lastEnd = ends[0];
+      if (lastStart && (!lastEnd || lastStart.ts > lastEnd.ts)) {
+        lastStart.status = 'active';
+        lastStart.activityKey = key;
+        lastStart.sessionId = lastStart.sessionId || lastStart.id;
+        toggles[key].active = true;
+        toggles[key].startTime = lastStart.ts;
+        toggles[key].sessionId = lastStart.sessionId || lastStart.id;
+      }
+    });
+  }
+
+  function updateToggleUI(key) {
+    const t = toggles[key];
+    const btn = document.getElementById(key + 'ToggleBtn');
+    const label = document.getElementById(key + 'ToggleLabel');
+    const statusEl = document.getElementById(key + 'Status');
+    if (!btn || !label) return;
+
+    if (t.active) {
+      btn.textContent = t.iconOff;
+      btn.classList.add('toggle-active');
+      label.textContent = t.labelOff;
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = '开始于 ' + new Date(t.startTime).toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
+      }
+    } else {
+      btn.textContent = t.iconOn;
+      btn.classList.remove('toggle-active');
+      label.textContent = t.labelOn;
+      if (statusEl) statusEl.style.display = 'none';
+    }
+  }
+
+  function toggleAction(key) {
+    const t = toggles[key];
+    const typeMap = { feed: 'feed', ritual: 'ritual', putdown: 'putdown', nap: 'sleep', cry: 'cry' };
+    const cloudType = typeMap[key];
+    const op = t.active ? 'end' : 'start';
+    const ts = Date.now();
+
+    // 同步调用状态机（在线时）；离线保持本地逻辑
+    const applyLocal = () => {
+      if (!t.active) {
+        // START
+        t.active = true;
+        t.startTime = ts;
+        const eventType = key === 'cry' ? 'cry_start' : (key + '_start');
+        const startedEvent = addEvent({ type: eventType, title: t.labelOn, detail: new Date(ts).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}), ts, activityKey:key, status:'active' });
+        t.sessionId = startedEvent.id;
+        if (startedEvent) startedEvent.sessionId = startedEvent.id;
+        updateToggleUI(key);
+        if (t.startToast) showToast(t.startToast);
+      } else {
+        // END
+        t.active = false;
+        const elapsed = Math.max(0, Math.floor((Date.now() - t.startTime) / 1000));
+        const m = Math.floor(elapsed / 60), s = elapsed % 60;
+        const sessionId = t.sessionId;
+        const startEvent = events.find(event => event.id === sessionId);
+        if (startEvent) startEvent.status = 'closed';
+        updateToggleUI(key);
+
+        if (key === 'cry') {
+          pendingCryDurationText = m + '分钟' + (s ? s + '秒' : '');
+          document.getElementById('crySummary').innerHTML = '哭闹时长: <strong>' + m + ' 分钟 ' + s + ' 秒</strong>';
+          closeQuickRecord();
+          setTimeout(openCryPicker, 300);
+          return;
+        }
+
+        const eventType = key + '_end';
+        addEvent({ type: eventType, title: t.labelOff, detail: '持续 ' + m + 'm' + s + 's', ts, activityKey:key, sessionId, status:'complete' });
+        if (t.endToast) showToast(t.endToast);
+      }
+    };
+
+    if (window.CloudSync?.isSignedIn?.() && navigator.onLine && cloudType) {
+      window.CloudSync.appendActivity(cloudType, op, ts).then(result => {
+        if (result && result.ignored) {
+          // 非法事件：静默回滚，不弹窗
+          showToast('⚠️ 状态冲突，已同步至服务器当前状态');
+          // 不改变本地 UI，等下次轮询校正
+          window.CloudSync.refreshActivityState?.();
+          return;
+        }
+        applyLocal();
+      }).catch(() => applyLocal());
+    } else {
+      applyLocal();
+    }
+  }
+
+  function addEvent(evt) {
+    const ts = Number.isFinite(toTimestamp(evt.ts)) ? toTimestamp(evt.ts) : Date.now();
+    const id = String(evt.id || ('e' + ts + Math.random().toString(36).slice(2, 7)));
+    const time = evt.time || new Date(ts).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+    const recorder = window.CloudSync?.getRecorder?.() || null;
+    const added = normalizeEvent({ ...evt, id, time, ts,
+      recorderId: evt.recorderId || recorder?.id || '',
+      recorderName: evt.recorderName || recorder?.name || '',
+      recorderRole: evt.recorderRole || recorder?.role || ''
+    });
+    events.push(added);
+    events.sort((a, b) => a.ts - b.ts);
+    saveEvents();
+    renderTimeline();
+    renderLogDay();
+    updatePrediction();
+    renderDataLog();
+    renderDataAnalytics();
+    return added;
+  }
+
+  // ============ 时间轴渲染 ============
+  // ============ 动态预测引擎（基于PDF规则） ============
+  // 本地日期工具：避免 toISOString() 的 UTC 偏移导致跨午夜时日期错记一天
+  function localDateStr(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function parseLocalDate(s) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ''));
+    if (!match) return new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+    return new Date(+match[1], (+match[2]) - 1, +match[3]);
+  }
+
+  function dayBounds(date) {
+    const start = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+    return { start, end: start + 86400000 };
+  }
+
+  function eventsOnDate(date) {
+    const bounds = dayBounds(date);
+    return events.filter(event => event.ts >= bounds.start && event.ts < bounds.end);
+  }
+
+  function isSleepStart(event) {
+    return event?.type === 'nap_start' && (event.night === true || /入睡/.test(event.title || ''));
+  }
+
+  function isSleepEnd(event) {
+    return event?.type === 'nap_end';
+  }
+
+  function isNightSleepStart(event) {
+    if (!isSleepStart(event)) return false;
+    const hour = new Date(event.ts).getHours();
+    return event.night === true || /夜觉/.test(event.title || '') || hour >= 18;
+  }
+
+  function getSleepPairsForDate(date) {
+    const bounds = dayBounds(date);
+    const starts = events
+      .filter(event => isSleepStart(event) && event.ts >= bounds.start && event.ts < bounds.end)
+      .sort((a, b) => a.ts - b.ts);
+    const ends = events.filter(isSleepEnd).sort((a, b) => a.ts - b.ts);
+    const usedEndIds = new Set();
+    return starts.map((start, index) => {
+      const maxDuration = isNightSleepStart(start) ? 18 * 60 : 5 * 60;
+      const nextStartTs = starts[index + 1]?.ts ?? Infinity;
+      const end = ends.find(candidate =>
+        !usedEndIds.has(candidate.id) &&
+        candidate.ts > start.ts &&
+        candidate.ts < nextStartTs &&
+        candidate.ts - start.ts <= maxDuration * 60000
+      ) || null;
+      if (end) usedEndIds.add(end.id);
+      const duration = end ? Math.round((end.ts - start.ts) / 60000) : null;
+      return {
+        start,
+        end,
+        duration: duration != null && duration >= 0 ? duration : null,
+        night: isNightSleepStart(start)
+      };
+    });
+  }
+
+  function getMorningStartEvent(date) {
+    const dayEvents = eventsOnDate(date);
+    const firstSleepStart = dayEvents.filter(event => isSleepStart(event) && !isNightSleepStart(event)).sort((a,b) => a.ts-b.ts)[0];
+    return dayEvents
+      .filter(event =>
+        ((event.type === 'nap_start' && event.title === '起床') ||
+        (event.type === 'putdown_end' && new Date(event.ts).getHours() < 10)) &&
+        (!firstSleepStart || event.ts < firstSleepStart.ts)
+      )
+      .sort((a, b) => b.ts - a.ts)[0] || null;
+  }
+
+  function formatMinutes(minutes) {
+    if (!Number.isFinite(minutes) || minutes < 0) return '—';
+    const whole = Math.round(minutes);
+    if (whole < 60) return whole + 'm';
+    return Math.floor(whole / 60) + 'h' + (whole % 60 ? (whole % 60) + 'm' : '');
+  }
+
+  function updatePrediction() {
+    const today = new Date();
+    const heroCardEl = document.getElementById('heroCard');
+    if (heroCardEl) heroCardEl.classList.remove('sleeping');
+    // 训练日计算：从 localStorage 读取训练开始日期
+    let trainStart = localStorage.getItem('trainStartDate');
+    if (!trainStart) { trainStart = localDateStr(today); localStorage.setItem('trainStartDate', trainStart); }
+    const startDate = parseLocalDate(trainStart);
+    const trainDay = Math.max(1, Math.floor((today - startDate) / 86400000) + 1);
+    document.getElementById('timelineDayTag').innerHTML = '训练 <strong>第 ' + trainDay + '</strong> 天';
+    // 间接安抚法·夜间安抚间隔递增表（PDF：Day1 3/5/7 → Day8+ 25/30/30，单位分钟）
+    // 注意：这是「夜间安抚进入间隔」，与下文「清醒间隔(wake window)」是两回事，不可混用
+    const comfortIntervals = [[3,5,7],[5,7,9],[7,9,12],[9,12,15],[12,15,18],[15,18,20],[18,20,25],[25,30,30]];
+    const cTable = trainDay <= comfortIntervals.length ? comfortIntervals[trainDay-1] : comfortIntervals[7];
+    const ivEl = document.getElementById('trainIntervalDisplay');
+    if (ivEl) ivEl.textContent = '第' + trainDay + '天 · 安抚 ' + cTable[0] + '/' + cTable[1] + '/' + cTable[2] + ' 分钟';
+    // 日期头
+    document.getElementById('timelineDate').textContent =
+      (selectedDate.getMonth()+1) + '月' + selectedDate.getDate() + '日 周' + ['日','一','二','三','四','五','六'][selectedDate.getDay()];
+    const todayEvents = eventsOnDate(selectedDate);
+    const cryEvents = todayEvents.filter(e => e.type === 'cry');
+    const feedEvents = todayEvents.filter(e => e.type === 'feed_start');
+
+    // 区分日夜：19:00-07:00为夜觉
+    function isNight(ts) { const h = new Date(ts).getHours(); return h >= 19 || h < 7; }
+
+    // 统计
+    const sleepPairs = getSleepPairsForDate(selectedDate);
+    const completedPairs = sleepPairs.filter(pair => pair.duration != null);
+    const dayPairs = completedPairs.filter(pair => !pair.night);
+    const nightPairs = completedPairs.filter(pair => pair.night);
+    const daySleepMin = dayPairs.reduce((sum, pair) => sum + pair.duration, 0);
+    const nightSleepMin = nightPairs.reduce((sum, pair) => sum + pair.duration, 0);
+    const totalSleepMin = daySleepMin + nightSleepMin;
+    const napCount = dayPairs.length;
+
+    // 摘要
+    document.getElementById('sumTotalSleep').textContent = (totalSleepMin >= 60 ? Math.floor(totalSleepMin/60)+'h'+(totalSleepMin%60)+'m' : totalSleepMin+'m');
+    document.getElementById('sumNapCount').textContent = napCount + '/4' + (nightSleepMin>0 ? ' +夜' : '');
+    document.getElementById('sumCryCount').textContent = cryEvents.length;
+    document.getElementById('sumFeedCount').textContent = feedEvents.length;
+
+    // 找最晚日间醒来或当天起床事件
+    let lastWake = todayEvents.filter(e => {
+      const hour = new Date(e.ts).getHours();
+      if (e.type === 'nap_start' && e.title === '起床') return true;
+      if (e.type === 'putdown_end') return hour < 18;
+      return e.type === 'nap_end' && !isNight(e.ts);
+    })
+      .sort((a,b) => b.ts - a.ts)[0];
+    const openSleep = sleepPairs.filter(pair => !pair.end).sort((a, b) => b.start.ts - a.start.ts)[0];
+    if (!lastWake && !openSleep) {
+      document.getElementById('heroTime').textContent = '--:--';
+      document.getElementById('heroLabel').textContent = '预计下一觉入睡窗口';
+      document.getElementById('heroSubtitle').textContent = '等待起床或醒来记录...';
+      document.getElementById('heroProgressFill').style.width = '0%';
+      document.getElementById('heroProgressText').textContent = '日间目标 3.5–4.5h';
+      const back = document.getElementById('heroBackBody');
+      if (back) back.innerHTML = '记录宝宝当天的<b>起床/抱起时间</b>后，应用会按两周计划生成下一觉入睡区间。';
+      return;
+    }
+
+    if (openSleep && (!lastWake || openSleep.start.ts > lastWake.ts)) {
+      if (heroCardEl) {
+        heroCardEl.classList.add('sleeping');
+        heroCardEl.classList.remove('flipped');
+      }
+      const startAt = new Date(openSleep.start.ts);
+      let expectedWake;
+      let planText;
+      if (openSleep.night) {
+        expectedWake = new Date(startAt);
+        if (startAt.getHours() >= 19) expectedWake.setDate(expectedWake.getDate() + 1);
+        expectedWake.setHours(7, 0, 0, 0);
+        planText = '计划晨醒 07:00';
+      } else {
+        const currentNapIndex = dayPairs.length;
+        const targetMinutes = currentNapIndex < 2 ? 150 : (currentNapIndex === 2 ? 45 : 30);
+        expectedWake = new Date(openSleep.start.ts + targetMinutes * 60000);
+        planText = currentNapIndex < 2 ? '前两觉单次不超过 2.5 小时' : (currentNapIndex === 2 ? '第三觉参考 45 分钟' : '黄昏觉参考 30 分钟');
+      }
+      const expectedWakeText = String(expectedWake.getHours()).padStart(2,'0') + ':' + String(expectedWake.getMinutes()).padStart(2,'0');
+      document.getElementById('heroTime').textContent = expectedWakeText;
+      document.getElementById('heroTime').style.fontSize = '42px';
+      document.getElementById('heroLabel').textContent = '预计醒来时间';
+      document.getElementById('heroSubtitle').textContent = '💤 ' + openSleep.start.time + ' 已入睡 · ' + planText;
+      document.getElementById('heroProgressFill').style.width = Math.min(100, (daySleepMin / 240) * 100) + '%';
+      document.getElementById('heroProgressText').textContent = '睡眠状态已保存';
+      const back = document.getElementById('heroBackBody');
+      if (back) back.innerHTML = '入睡记录：<b>' + escapeHTML(openSleep.start.time) + '</b><br>预计醒来：<b>' + expectedWakeText + '</b><br>依据：' + planText + '<br><span style="opacity:.82">预计时间用于安排照护，宝宝自然醒来后请直接记录“醒来”。</span>';
+      return;
+    }
+
+    // ===== 预计下一觉入睡窗口（区间，而非精确点）=====
+    // PDF 清醒间隔(wake window) 区间，单位分钟：
+    //   第1觉前 75–90；第2/3/黄昏觉前 90–105；夜觉前 105（固定 1h45m）
+    function wakeWindow(n) {
+      if (n === 0) return [75, 90];    // 第一觉前：1h15–1h30
+      if (n <= 3) return [90, 105];   // 第二、三、黄昏觉前：1h30–1h45
+      return [105, 105];              // 夜觉前：固定 1h45m
+    }
+    const napNames = ['第一觉','第二觉','第三觉','黄昏觉','夜觉'];
+
+    // PDF 仅给出固定区间；小觉质量不佳时提示家长观察，不擅自用算法缩放计划参数。
+    const observationNotes = [];
+    const lastNapObj = dayPairs.length > 0 ? dayPairs[dayPairs.length - 1] : null;
+    if (lastNapObj && lastNapObj.duration < 30) observationNotes.push('上一觉较短，可留意困倦信号');
+    const recentCry = cryEvents.slice(-2);
+    if (recentCry.length >= 2 && recentCry.every(c => (c.intensity || 0) >= 4)) observationNotes.push('近期哭闹强，可考虑提前准备仪式');
+
+    // 白天小觉已达上限 → 直接入夜
+    if (daySleepMin >= 270) {
+      document.getElementById('heroTime').textContent = '入夜';
+      document.getElementById('heroTime').style.fontSize = '42px';
+      document.getElementById('heroLabel').textContent = '白天睡眠已达上限';
+      document.getElementById('heroSubtitle').textContent = '🌜 准备夜间睡眠仪式（夜觉前清醒 1h45m）';
+      document.getElementById('heroProgressFill').style.width = '100%';
+      document.getElementById('heroProgressText').textContent = '已睡 ' + (totalSleepMin/60).toFixed(1) + 'h';
+      const back = document.getElementById('heroBackBody');
+      if (back) back.innerHTML = '⚠️ 当日日间小觉累计 <b>' + daySleepMin + ' 分钟（≥270）</b>，已达上限。<br>停止安排小觉，直接进入夜间睡眠仪式，夜觉前保持清醒 1h45m。';
+      return;
+    }
+
+    // 清醒间隔区间（分钟）：严格使用计划参数
+    const baseWin = wakeWindow(napCount);
+    let [winLo, winHi] = baseWin;
+
+    const fmt = (d) => String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    const earliest = new Date(lastWake.ts + winLo * 60000);
+    const latest = new Date(lastWake.ts + winHi * 60000);
+
+    const heroTimeEl = document.getElementById('heroTime');
+    const heroLabelEl = document.getElementById('heroLabel');
+    const heroSubEl = document.getElementById('heroSubtitle');
+
+    // 黄昏觉硬约束：仅对「第四觉(黄昏觉)」生效。若最早入睡时间已错过 17:45 窗口 → 跳过黄昏觉，直接入夜（夜觉前 1h45m）
+    const earlyTotal = earliest.getHours() * 60 + earliest.getMinutes();
+    if (napCount === 3 && earlyTotal >= 17 * 60 + 45) {
+      const nightTime = new Date(lastWake.ts + 105 * 60000);
+      heroTimeEl.textContent = '入夜';
+      heroTimeEl.style.fontSize = '42px';
+      heroLabelEl.textContent = '黄昏觉已过 · 直接入夜';
+      heroSubEl.textContent = '🌜 预计夜觉 ' + fmt(nightTime) + '（跳过黄昏觉，夜觉前清醒 1h45m）';
+    } else {
+      const isPoint = (winLo === winHi);
+      heroTimeEl.textContent = isPoint ? fmt(earliest) : (fmt(earliest) + '–' + fmt(latest));
+      heroTimeEl.style.fontSize = isPoint ? '42px' : '30px';
+      heroLabelEl.textContent = '预计 ' + (napNames[napCount] || '下一觉') + ' 入睡窗口';
+      const viewingToday = selectedDate.toDateString() === today.toDateString();
+      const diffMin = Math.round((earliest - today) / 60000);
+      heroSubEl.textContent = !viewingToday
+        ? '历史计算 · 清醒间隔 ' + winLo + '–' + winHi + ' 分钟'
+        : diffMin > 0
+        ? '🌙 ' + (napNames[napCount] || '下一觉') + ' · 清醒间隔 ' + winLo + '–' + winHi + ' 分钟 · 距最早入睡还有 ' + diffMin + ' 分钟'
+        : '⏰ 已进入入睡窗口，现在安排宝宝入睡';
+    }
+
+    // 背面：动态计算原则
+    const back = document.getElementById('heroBackBody');
+    if (back) {
+      back.innerHTML =
+        '最近一次醒来：<b>' + fmt(new Date(lastWake.ts)) + '</b>（' + (lastWake.title || '—') + '）<br>' +
+        '即将：<b>第 ' + (napCount + 1) + ' 觉 · ' + (napNames[napCount] || '下一觉') + '</b><br>' +
+        '清醒间隔(PDF)：' + baseWin[0] + '–' + baseWin[1] + ' 分钟<br>' +
+        '观察提示：' + (observationNotes.length ? observationNotes.join('；') : '按原计划执行') + '<br>' +
+        '<b>实际窗口 ' + winLo + '–' + winHi + ' 分 → ' + fmt(earliest) + '–' + fmt(latest) + '</b><br>' +
+        '<span style="opacity:.8;font-size:11px;">注：清醒间隔≠夜间安抚间隔（间接安抚法递增表，见设置页）</span>';
+    }
+
+    const progress = Math.min(100, (daySleepMin / 240) * 100);
+    document.getElementById('heroProgressFill').style.width = progress + '%';
+    document.getElementById('heroProgressText').textContent = '已睡 ' + (daySleepMin/60).toFixed(1).replace('.0','') + 'h' + (daySleepMin%60 > 0 ? (daySleepMin%60)+'m' : '') + (nightSleepMin>0 ? ' | 夜觉 '+(nightSleepMin/60).toFixed(1).replace('.0','')+'h':'');
+  }
+
+  // 卡片翻转：正面=预测，背面=计算原则
+  function flipHero() {
+    const c = document.getElementById('heroCard');
+    if (!c) return;
+    const flipped = c.classList.toggle('flipped');
+    const hint = document.getElementById('heroFlipHint');
+    if (hint) hint.textContent = flipped ? '👆 点我返回' : '👆 点我看计算原则';
+  }
+
+  let selectedDate = new Date(); // 当前查看的日期
+  let dateRangeStart = -15; // 左侧最早偏移天数
+  let dateRangeEnd = 15;    // 右侧最晚偏移天数
+
+  function renderDateCarousel(prepend) {
+    const container = document.getElementById('dateCarousel');
+    const today = new Date();
+    const days = [];
+    let prevMonth = -1;
+    for (let i = dateRangeStart; i <= dateRangeEnd; i++) {
+      const d = new Date(today); d.setDate(today.getDate() + i);
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const ww = ['日','一','二','三','四','五','六'][d.getDay()];
+      const isToday = i === 0;
+      const isSelected = d.toDateString() === selectedDate.toDateString();
+      const hasData = events.some(e => new Date(e.ts).toDateString() === d.toDateString());
+      // 跨月分界
+      if (d.getMonth() !== prevMonth) {
+        days.push({ kind: 'month', label: (d.getMonth() + 1) + '月' });
+        prevMonth = d.getMonth();
+      }
+      days.push({ kind: 'day', date: mm + '-' + dd, weekday: ww, hasData, active: isSelected, isToday, ts: d.getTime() });
+    }
+    container.innerHTML = days.map(d => {
+      if (d.kind === 'month') return '<div class="date-month-divider">' + d.label + '</div>';
+      return `
+        <div class="date-item ${d.active ? 'active' : ''} ${d.isToday && !d.active ? 'today' : ''}"
+             onclick="selectDate(new Date(${d.ts}))">
+          <div class="weekday">${d.weekday}</div>
+          <div class="day">${d.date.split('-')[1]}</div>
+          ${d.hasData ? '<div class="dot-indicator"></div>' : ''}
+        </div>
+      `;
+    }).join('');
+
+    // 确保首次渲染定位到当天（DOM 可能未完成 layout）
+    const activeEl = container.querySelector('.date-item.active');
+    if (activeEl && !prepend) {
+      requestAnimationFrame(() => {
+        activeEl.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
+      });
+    }
+  }
+
+  // 无限滚动：监听横向滚动，接近边界时扩展
+  function setupDateCarouselInfiniteScroll() {
+    const container = document.getElementById('dateCarousel');
+    if (!container || container._infiniteBound) return;
+    container._infiniteBound = true;
+    container.addEventListener('scroll', () => {
+      if (container.scrollLeft < 60) {
+        dateRangeStart -= 15;
+        renderDateCarousel(true);
+        // 保持滚动位置
+        const oldWidth = container.scrollWidth;
+        requestAnimationFrame(() => {
+          container.scrollLeft = container.scrollWidth - oldWidth + container.scrollLeft;
+        });
+      } else if (container.scrollLeft + container.clientWidth > container.scrollWidth - 60) {
+        dateRangeEnd += 15;
+        renderDateCarousel(true);
+      }
+    });
+  }
+
+  function selectDate(date) {
+    selectedDate = date;
+    renderDateCarousel();
+    renderTimeline();
+    updatePrediction();
+    renderDataLog();
+    renderDataAnalytics();
+  }
+  window.selectDate = selectDate;
+  function goToday() {
+    selectDate(new Date());
+    showToast('📅 已回到今天');
+  }
+  window.goToday = goToday;
+
+  const timelineFilterCategories = ['sleep','feed','routine','cry','soothe'];
+  const timelineFilters = new Set(timelineFilterCategories);
+  function eventCategory(event) {
+    const type = String(event?.type || '');
+    if (type.startsWith('nap_')) return 'sleep';
+    if (type.startsWith('feed_') || type === 'feed') return 'feed';
+    if (type.startsWith('ritual_') || type.startsWith('putdown_')) return 'routine';
+    if (type.startsWith('cry')) return 'cry';
+    if (type === 'soothe') return 'soothe';
+    return 'other';
+  }
+  function toggleTimelineFilterMenu(event) {
+    event?.stopPropagation();
+    document.getElementById('timelineFilterMenu')?.classList.toggle('open');
+  }
+  function toggleTimelineFilter(filter, checked) {
+    if (filter === 'all') {
+      timelineFilters.clear();
+      if (checked) timelineFilterCategories.forEach(category => timelineFilters.add(category));
+    } else if (checked) {
+      timelineFilters.add(filter);
+    } else {
+      timelineFilters.delete(filter);
+    }
+    updateTimelineFilterUI();
+    renderTimeline();
+  }
+  function updateTimelineFilterUI() {
+    document.querySelectorAll('[data-filter-option]').forEach(input => {
+      input.checked = input.dataset.filterOption === 'all'
+        ? timelineFilters.size === timelineFilterCategories.length
+        : timelineFilters.has(input.dataset.filterOption);
+    });
+    const button = document.getElementById('timelineFilterButton');
+    if (button) {
+      const allSelected = timelineFilters.size === timelineFilterCategories.length;
+      button.textContent = allSelected ? '🔽 筛选' : `🔽 筛选 · ${timelineFilters.size}`;
+      button.classList.toggle('active', !allSelected);
+    }
+  }
+  window.toggleTimelineFilterMenu = toggleTimelineFilterMenu;
+  window.toggleTimelineFilter = toggleTimelineFilter;
+  document.addEventListener('click', () => document.getElementById('timelineFilterMenu')?.classList.remove('open'));
+
+  function renderTimeline() {
+    const container = document.getElementById('timelineEvents');
+    const allDayEvents = events.filter(e => {
+      return new Date(e.ts).toDateString() === selectedDate.toDateString();
+    });
+
+    const filterCounts = { all: allDayEvents.length, sleep:0, feed:0, routine:0, cry:0, soothe:0 };
+    allDayEvents.forEach(event => { const category = eventCategory(event); if (category in filterCounts) filterCounts[category] += 1; });
+    document.querySelectorAll('[data-filter-count]').forEach(count => {
+      count.textContent = filterCounts[count.dataset.filterCount] || 0;
+    });
+    const todayEvents = allDayEvents.filter(event => timelineFilters.has(eventCategory(event)));
+
+    const categoryIcon = { sleep:'🌙', feed:'🍼', routine:'🛏️', cry:'🥺', soothe:'🤗', other:'📝' };
+    const dotClass = { sleep:'nap', feed:'feed', routine:'ritual', cry:'cry', soothe:'soothe', other:'nap' };
+
+    const reversed = [...todayEvents].sort((a, b) => b.ts - a.ts); // 按时间戳降序：新到旧
+
+    container.innerHTML = reversed.length ? reversed.map((event, i) => {
+      const category = eventCategory(event);
+      const icon = categoryIcon[category];
+      const recorder = event.recorderName || event.recorder_name;
+      const recorderRole = event.recorderRole || event.recorder_role;
+      return `
+        <div class="timeline-event" data-event-id="${escapeHTML(event.id)}" onclick="openEventDetail(this.dataset.eventId)">
+          <div class="timeline-dot ${dotClass[category]}"></div>
+          <div class="event-row">
+            <div class="event-header">
+              <div class="event-title">${icon} ${escapeHTML(event.title)}</div>
+              <div class="event-time">${escapeHTML(event.time)}</div>
+            </div>
+            <div class="event-detail">${escapeHTML(event.detail || '')}</div>
+            ${recorder ? `<div class="event-recorder">${escapeHTML(recorderRole ? recorderRole + ' · ' + recorder : recorder)}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('') : `<div style="text-align:center;padding:60px 20px;color:var(--text-secondary);"><div style="font-size:36px;margin-bottom:12px;">${allDayEvents.length ? '🔎' : '📝'}</div><div style="font-size:15px;">${allDayEvents.length ? '所选类别暂无记录' : '今天还没有记录'}</div><div style="font-size:12px;margin-top:6px;">${allDayEvents.length ? '在右上角筛选器中选择其他类别' : '点击下方 + 快速记录开始'}</div></div>`;
+  }
+
+  // ============ 事件详情查看/编辑 ============
+  function openEventDetail(id) {
+    const event = events.find(e => e.id === id);
+    if (!event) return;
+    currentDetailEventId = id;
+    document.getElementById('detailType').textContent = event.title;
+    document.getElementById('detailDate').value = localDateStr(event.ts);
+    document.getElementById('detailTime').value = event.time;
+    document.getElementById('detailNote').value = event.detail || '';
+    const recorderLabel = [event.recorderRole || event.recorder_role, event.recorderName || event.recorder_name].filter(Boolean).join(' · ');
+    document.getElementById('detailExtra').innerHTML =
+      (event.intensity !== undefined ? '<div class="log-row"><span class="log-field-label">强度</span><span class="log-field-value" id="detailIntensity">' + event.intensity + '</span></div>' : '') +
+      '<div class="log-row"><span class="log-field-label">记录者</span><span class="log-field-value">' + escapeHTML(recorderLabel || '本机记录') + '</span></div>';
+    updateDetailDuration();
+    document.getElementById('eventDetailOverlay').classList.add('active');
+    document.getElementById('eventDetailSheet').classList.add('active');
+  }
+
+  function updateDetailDuration() {
+    const durEl = document.getElementById('detailDuration');
+    if (!durEl) return;
+    const ev = events.find(e => e.id === currentDetailEventId);
+    if (!ev) { durEl.textContent = '--'; return; }
+    const dur = computeDurationForEvent(ev);
+    durEl.textContent = dur === null ? '--' : dur;
+  }
+
+  function computeDurationForEvent(ev) {
+    if (!ev) return null;
+    const events_all = events;
+    const type = ev.type;
+    // 喂奶：feed_start + 同 session_id 的 feed_end
+    if (type === 'feed_start' || type === 'feed') {
+      const end = type === 'feed_start' ? events_all.find(e => e.type === 'feed_end' && e.sessionId === ev.sessionId) : events_all.find(e => e.type === 'feed_end' && e.sessionId === ev.sessionId);
+      if (!end) return null;
+      return formatDurationText(end.ts - ev.ts);
+    }
+    if (type === 'feed_end') {
+      const start = events_all.find(e => e.type === 'feed_start' && e.sessionId === ev.sessionId);
+      if (!start) return null;
+      return formatDurationText(ev.ts - start.ts);
+    }
+    // 睡眠：nap_start + nap_end（按归档逻辑取到次日晨醒）
+    if (type === 'nap_start' || type === 'nap') {
+      const end = events_all.find(e => e.type === 'nap_end' && e.sessionId === ev.sessionId);
+      if (!end) return null;
+      return formatDurationText(end.ts - ev.ts);
+    }
+    if (type === 'nap_end') {
+      const start = events_all.find(e => e.type === 'nap_start' && e.sessionId === ev.sessionId);
+      if (!start) return null;
+      return formatDurationText(ev.ts - start.ts);
+    }
+    // 仪式
+    if (type === 'ritual_start') {
+      const end = events_all.find(e => e.type === 'ritual_end' && e.sessionId === ev.sessionId);
+      if (!end) return null;
+      return formatDurationText(end.ts - ev.ts);
+    }
+    if (type === 'ritual_end') {
+      const start = events_all.find(e => e.type === 'ritual_start' && e.sessionId === ev.sessionId);
+      if (!start) return null;
+      return formatDurationText(ev.ts - start.ts);
+    }
+    // 放下：放下时间 - 入睡时间（入睡取最近的 nap_start）
+    if (type === 'putdown_start') {
+      const sleep = findNearestSleepStart(ev.ts);
+      if (!sleep) return null;
+      return formatDurationText(ev.ts - sleep.ts);
+    }
+    // 哭闹
+    if (type === 'cry_start') {
+      const end = events_all.find(e => e.type === 'cry_end' && e.sessionId === ev.sessionId);
+      if (!end) return null;
+      return formatDurationText(end.ts - ev.ts);
+    }
+    if (type === 'cry_end') {
+      const start = events_all.find(e => e.type === 'cry_start' && e.sessionId === ev.sessionId);
+      if (!start) return null;
+      return formatDurationText(ev.ts - start.ts);
+    }
+    return null;
+  }
+
+  function findNearestSleepStart(ts) {
+    const starts = events.filter(e => e.type === 'nap_start').sort((a, b) => a.ts - b.ts);
+    if (!starts.length) return null;
+    let best = null;
+    for (const s of starts) {
+      if (s.ts <= ts && (!best || s.ts > best.ts)) best = s;
+    }
+    return best;
+  }
+
+  function formatDurationText(ms) {
+    if (!Number.isFinite(ms) || ms < 0) return '--';
+    const totalMin = Math.floor(ms / 60000);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    if (h > 0) return h + '小时' + (m ? m + '分钟' : '');
+    if (m > 0) return m + '分钟';
+    return Math.round(ms / 1000) + '秒';
+  }
+
+  function saveEventDetail() {
+    if (!currentDetailEventId) return;
+    const event = events.find(e => e.id === currentDetailEventId);
+    if (!event) return;
+    event.time = document.getElementById('detailTime').value;
+    event.detail = document.getElementById('detailNote').value;
+    const dateStr = document.getElementById('detailDate').value;
+    const parts = event.time.split(':');
+    if (parts.length === 2 && dateStr) {
+      const [hh, mm] = [parseInt(parts[0]), parseInt(parts[1])];
+      const newDate = parseLocalDate(dateStr);
+      newDate.setHours(hh, mm, 0, 0);
+      event.ts = newDate.getTime();
+    } else if (parts.length === 2) {
+      const newTs = new Date(event.ts);
+      newTs.setHours(parseInt(parts[0]), parseInt(parts[1]), 0, 0);
+      event.ts = newTs.getTime();
+    }
+    saveEvents();
+    window.CloudSync?.pushEventToCloud?.(event);
+    closeEventDetail();
+    renderTimeline();
+    renderLogDay();
+    updatePrediction();
+    renderDataLog();
+    renderDataAnalytics();
+    showToast('✅ 已保存');
+  }
+
+  function deleteEvent() {
+    if (!currentDetailEventId) return;
+    if (!confirm('确认删除这条记录？')) return;
+    const deletedId = currentDetailEventId;
+    events = events.filter(e => e.id !== deletedId);
+    window.CloudSync?.deleteEvent?.(deletedId);
+    saveEvents();
+    closeEventDetail();
+    renderTimeline();
+    renderLogDay();
+    updatePrediction();
+    renderDataLog();
+    renderDataAnalytics();
+    showToast('🗑️ 已删除');
+  }
+
+  function closeEventDetail() {
+    currentDetailEventId = null;
+    document.getElementById('eventDetailOverlay').classList.remove('active');
+    document.getElementById('eventDetailSheet').classList.remove('active');
+  }
+
+  // ============ 日志页渲染 ============
+  function renderLogDay() {
+    // 简易统计
+    const todayEvents = events.filter(e => new Date(e.ts).toDateString() === new Date().toDateString());
+    const feedCount = todayEvents.filter(e => e.type === 'feed').length;
+    const cryEvents = todayEvents.filter(e => e.type === 'cry');
+    // 保持日志页示例数据不变（实际应用中会同步）
+  }
+
+  // ============ 页面导航 ============
+  function switchTab(tabName) {
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    const pageMap = { timeline: 'pageTimeline', manual: 'pageManual', data: 'pageData', settings: 'pageSettings', log: 'pageLog' };
+    const targetId = pageMap[tabName];
+    if (targetId) document.getElementById(targetId).classList.remove('hidden');
+    if (tabName === 'data') {
+      renderDataLog();
+      renderDataAnalytics();
+      showDataSub('log');
+    }
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    const tabEl = document.querySelector(`.tab-item[data-tab="${tabName}"]`);
+    if (tabEl) tabEl.classList.add('active');
+  }
+
+  function showDataSub(sub) {
+    const logPanel = document.getElementById('dataPanelLog');
+    const analyticsPanel = document.getElementById('dataPanelAnalytics');
+    if (!logPanel || !analyticsPanel) return;
+    if (sub === 'log') { logPanel.style.display = 'block'; analyticsPanel.style.display = 'none'; }
+    else { logPanel.style.display = 'none'; analyticsPanel.style.display = 'block'; }
+    document.querySelectorAll('#pageData .segment-item').forEach(s => s.classList.remove('active'));
+    const seg = document.querySelector(`#pageData .segment-item[data-sub="${sub}"]`);
+    if (seg) seg.classList.add('active');
+  }
+
+  // 数据页子Tab切换
+  document.querySelectorAll('#pageData .segment-item').forEach(seg => {
+    seg.addEventListener('click', () => showDataSub(seg.dataset.sub));
+  });
+
+  // 初始化：克隆日志和分析到数据页
+  // ============ 数据页动态渲染 ============
+  function renderDataLog() {
+    const panel = document.getElementById('dataPanelLog');
+    if (!panel) return;
+    const todayEvents = eventsOnDate(selectedDate);
+    const wakeUps = todayEvents.filter(e => e.type === 'nap_start' && e.title === '起床');
+    const morningWake = todayEvents.filter(e => e.type === 'nap_end' && new Date(e.ts).getHours() < 10).sort((a,b) => a.ts-b.ts)[0] || null;
+    const feeds = todayEvents.filter(e => e.type === 'feed_start');
+    const cries = todayEvents.filter(e => e.type === 'cry');
+    const soothes = todayEvents.filter(e => e.type === 'soothe');
+
+    // 核算总览
+    const sleepPairs = getSleepPairsForDate(selectedDate);
+    const dayPairs = sleepPairs.filter(pair => !pair.night);
+    const nightPair = sleepPairs.find(pair => pair.night) || null;
+    const daySleep = dayPairs.reduce((sum, pair) => sum + (pair.duration || 0), 0);
+    const nightSleep = sleepPairs.filter(pair => pair.night).reduce((sum, pair) => sum + (pair.duration || 0), 0);
+    const totalSleep = daySleep + nightSleep;
+
+    const morningStart = getMorningStartEvent(selectedDate);
+    let previousWakeTs = morningStart?.ts ?? null;
+    const rows = dayPairs.map((pair, index) => {
+      const segmentStartTs = previousWakeTs ?? dayBounds(selectedDate).start;
+      const ww = previousWakeTs != null ? Math.round((pair.start.ts - previousWakeTs) / 60000) : null;
+      const putdown = todayEvents
+        .filter(event => event.type === 'putdown_start' && event.ts >= segmentStartTs && event.ts <= pair.start.ts)
+        .sort((a, b) => b.ts - a.ts)[0] || null;
+      const ritual = todayEvents
+        .filter(event => event.type === 'ritual_start' && event.ts >= segmentStartTs && event.ts <= pair.start.ts)
+        .sort((a, b) => b.ts - a.ts)[0] || null;
+      if (pair.end) previousWakeTs = pair.end.ts;
+      return { ...pair, name: '小觉' + (index + 1), putdown, ritual, ww: ww != null && ww >= 0 ? ww : null };
+    });
+    const nightRitual = nightPair ? todayEvents.filter(event => event.type === 'ritual_start' && event.ts <= nightPair.start.ts).sort((a,b) => b.ts-a.ts)[0] : null;
+    const nightPutdown = nightPair ? todayEvents.filter(event => event.type === 'putdown_start' && event.ts <= nightPair.start.ts).sort((a,b) => b.ts-a.ts)[0] : null;
+    const recorderText = event => event ? [event.recorderRole || event.recorder_role, event.recorderName || event.recorder_name].filter(Boolean).join(' · ') : '';
+    const dateLabel = `${selectedDate.getMonth()+1}月${selectedDate.getDate()}日 周${['日','一','二','三','四','五','六'][selectedDate.getDay()]}`;
+    const completedSleeps = sleepPairs.filter(pair=>pair.duration!=null).length;
+    const dataScore = Math.min(100, (morningStart ? 20 : 0) + Math.min(60, completedSleeps * 20) + (todayEvents.length ? 20 : 0));
+    
+    let html = `<div class="log-section" style="background:linear-gradient(135deg,rgba(79,125,217,.12),rgba(141,185,244,.08));">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;"><div><b>${dateLabel}</b><div style="font-size:11px;color:var(--text-secondary);margin-top:4px">共 ${todayEvents.length} 条原始记录 · 完整睡眠 ${completedSleeps} 次</div></div><div class="cloud-status-pill">完整度 ${dataScore}%</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+      <div class="event-row" style="padding:10px;"><b>总睡眠</b><br><span style="font-size:18px;">${formatMinutes(totalSleep)}</span><br><span style="font-size:10px;color:var(--text-secondary)">日${formatMinutes(daySleep)}+夜${formatMinutes(nightSleep)}</span></div>
+      <div class="event-row" style="padding:10px;"><b>喂养/哭闹/安抚</b><br><span style="font-size:18px;">${feeds.length}次/${cries.length}次/${soothes.length}次</span></div>
+    </div>`;
+
+    // 晨醒
+    if (morningWake || morningStart || wakeUps.length) {
+      html += `<div class="log-section"><div class="log-section-title">☀️ 晨醒</div>
+        <div class="log-section-grid single">
+          <div class="log-row"><span class="log-field-label">早上醒来</span><span class="log-field-value">${morningWake ? escapeHTML(morningWake.time) : '待记录'}</span></div>
+          <div class="log-row"><span class="log-field-label">抱起时间</span><span class="log-field-value">${morningStart ? escapeHTML(morningStart.time) : '待记录'}</span></div>
+          <div class="log-row"><span class="log-field-label">记录者</span><span class="log-field-value">${escapeHTML(recorderText(morningStart || morningWake) || '本机记录')}</span></div>
+        </div></div>`;
+    }
+
+    // 日间小觉
+    rows.forEach((r,i)=>{
+      html += `<div class="log-section"><div class="log-section-title">🌙 小觉${i+1} ${r.ww != null ? 'WW:'+formatMinutes(r.ww) : 'WW: 待记录'}</div>
+        <div class="log-section-grid">
+          <div class="log-row"><span class="log-field-label">上床时间</span><span class="log-field-value">${r.putdown ? escapeHTML(r.putdown.time) : '待记录'}</span></div>
+          <div class="log-row"><span class="log-field-label">睡着时间</span><span class="log-field-value">${escapeHTML(r.start.time)}</span></div>
+          <div class="log-row"><span class="log-field-label">抱起时间</span><span class="log-field-value">${r.end ? escapeHTML(r.end.time) : '进行中'}</span></div>
+          <div class="log-row"><span class="log-field-label">入睡过程</span><span class="log-field-value">${escapeHTML(r.start.detail || '待补充')}</span></div>
+          <div class="log-row"><span class="log-field-label">入睡耗时</span><span class="log-field-value">${r.putdown ? formatMinutes(Math.max(0,Math.round((r.start.ts-r.putdown.ts)/60000))) : '待记录放下时间'}</span></div>
+          <div class="log-row"><span class="log-field-label">记录者</span><span class="log-field-value">${escapeHTML(recorderText(r.start) || '本机记录')}</span></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-secondary);padding-top:8px">睡眠时长：${r.duration != null ? formatMinutes(r.duration) : '进行中'}${r.ritual ? ' · 仪式 ' + escapeHTML(r.ritual.time) : ''}</div>
+      </div>`;
+    });
+
+    // 夜觉
+    if (nightPair) {
+      html += `<div class="log-section"><div class="log-section-title">🌜 夜觉 · 时长: ${nightPair.duration != null ? formatMinutes(nightPair.duration) : '进行中'}</div>
+        <div class="log-section-grid">
+          <div class="log-row"><span class="log-field-label">睡眠仪式</span><span class="log-field-value">${nightRitual ? escapeHTML(nightRitual.time) : '待记录'}</span></div>
+          <div class="log-row"><span class="log-field-label">放下时间</span><span class="log-field-value">${nightPutdown ? escapeHTML(nightPutdown.time) : '待记录'}</span></div>
+          <div class="log-row"><span class="log-field-label">睡着时间</span><span class="log-field-value">${escapeHTML(nightPair.start.time)}</span></div>
+          <div class="log-row"><span class="log-field-label">醒来时间</span><span class="log-field-value">${nightPair.end ? escapeHTML(nightPair.end.time) : '进行中'}</span></div>
+          <div class="log-row"><span class="log-field-label">入睡过程</span><span class="log-field-value">${escapeHTML(nightPair.start.detail || '待补充')}</span></div>
+          <div class="log-row"><span class="log-field-label">记录者</span><span class="log-field-value">${escapeHTML(recorderText(nightPair.start) || '本机记录')}</span></div>
+        </div></div>`;
+    }
+
+    // 夜醒/夜奶
+    const nightWakes = todayEvents.filter(e => (e.type==='cry' || e.type==='feed_start') && (new Date(e.ts).getHours()>=19 || new Date(e.ts).getHours()<7));
+    if (nightWakes.length) {
+      html += `<div class="log-section"><div class="log-section-title">🔔 夜间活动</div>`;
+      nightWakes.forEach(e=>{
+        html += `<div style="font-size:13px;color:var(--text-secondary);padding:2px 0">${escapeHTML(e.time)} · ${escapeHTML(e.title)} · ${escapeHTML(e.detail)}</div>`;
+      });
+      html += `</div>`;
+    }
+
+    panel.innerHTML = html || '<div style="text-align:center;padding:40px;color:var(--text-secondary)">暂无今日记录<br>开始记录后自动生成日志</div>';
+  }
+
+  function renderDataAnalytics() {
+    const panel = document.getElementById('dataPanelAnalytics');
+    if (!panel) return;
+
+    const endDate = new Date(selectedDate);
+    const dailyStats = [];
+    const mean = values => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+    const sleepFmt = minutes => formatMinutes(Math.round(minutes || 0));
+    const weekdays = ['日','一','二','三','四','五','六'];
+
+    function pairedDurations(dayEvents, startType, endTypes) {
+      const starts = dayEvents.filter(event => event.type === startType).sort((a,b)=>a.ts-b.ts);
+      const ends = dayEvents.filter(event => endTypes.includes(event.type)).sort((a,b)=>a.ts-b.ts);
+      const used = new Set();
+      return starts.map(start => {
+        const end = ends.find(item => item.ts >= start.ts && !used.has(item.id));
+        if (!end) return null;
+        used.add(end.id);
+        return Math.max(0, Math.round((end.ts - start.ts) / 60000));
+      }).filter(value => value != null);
+    }
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(endDate); date.setDate(endDate.getDate() - i);
+      const dayEvents = eventsOnDate(date);
+      const pairs = getSleepPairsForDate(date).filter(pair => pair.duration != null);
+      const dayPairs = pairs.filter(pair => !pair.night);
+      const nightPairs = pairs.filter(pair => pair.night);
+      const settleMinutes = pairedDurations(dayEvents, 'putdown_start', ['nap_start']);
+      const feedMinutes = pairedDurations(dayEvents, 'feed_start', ['feed_end']);
+      const morningStart = getMorningStartEvent(date);
+      let previousWake = morningStart?.ts || null;
+      const wakeWindows = [];
+      dayPairs.forEach(pair => {
+        if (previousWake != null && pair.start.ts >= previousWake) wakeWindows.push(Math.round((pair.start.ts - previousWake) / 60000));
+        if (pair.end) previousWake = pair.end.ts;
+      });
+      const sleepStarts = dayEvents.filter(isSleepStart);
+      const ritualStarts = dayEvents.filter(event => event.type === 'ritual_start');
+      const cries = dayEvents.filter(event => event.type === 'cry');
+      dailyStats.push({
+        date, hasData:dayEvents.length>0, eventCount:dayEvents.length,
+        daySleep:dayPairs.reduce((sum,pair)=>sum+pair.duration,0),
+        nightSleep:nightPairs.reduce((sum,pair)=>sum+pair.duration,0),
+        napCount:dayPairs.length,
+        napDurations:dayPairs.map(pair=>pair.duration), wakeWindows, settleMinutes, feedMinutes,
+        feedCount:dayEvents.filter(event=>event.type==='feed_start').length,
+        cryCount:cries.length, sootheCount:dayEvents.filter(event=>event.type==='soothe').length,
+        cryIntensities:cries.map(event=>Number(event.intensity)).filter(Number.isFinite),
+        ritualCoverage:sleepStarts.length ? Math.min(1, ritualStarts.length / sleepStarts.length) : null,
+        bedtime:nightPairs[0]?.start?.ts || null
+      });
+    }
+
+    dailyStats.forEach(stat => { stat.sleepMin = stat.daySleep + stat.nightSleep; });
+    const recorded = dailyStats.filter(stat=>stat.hasData);
+    const completedSleepDays = dailyStats.filter(stat=>stat.sleepMin>0);
+    const allNapDurations = dailyStats.flatMap(stat=>stat.napDurations);
+    const allWakeWindows = dailyStats.flatMap(stat=>stat.wakeWindows);
+    const allSettle = dailyStats.flatMap(stat=>stat.settleMinutes);
+    const allIntensities = dailyStats.flatMap(stat=>stat.cryIntensities);
+    const avgSleep = mean(completedSleepDays.map(stat=>stat.sleepMin));
+    const avgDaySleep = mean(completedSleepDays.map(stat=>stat.daySleep));
+    const avgNightSleep = mean(completedSleepDays.map(stat=>stat.nightSleep));
+    const avgNap = mean(allNapDurations);
+    const avgWake = mean(allWakeWindows);
+    const avgSettle = mean(allSettle);
+    const avgFeed = mean(recorded.map(stat=>stat.feedCount));
+    const avgCry = mean(recorded.map(stat=>stat.cryCount));
+    const avgIntensity = mean(allIntensities);
+    const routineStats = recorded.map(stat=>stat.ritualCoverage).filter(value=>value!=null);
+    const routineCoverage = mean(routineStats) * 100;
+    const targetDayCount = dailyStats.filter(stat=>stat.daySleep>=210 && stat.daySleep<=270).length;
+    const maxSleep = Math.max(...dailyStats.map(stat=>stat.sleepMin), 1);
+    const bedtimeValues = dailyStats.map(stat=>stat.bedtime).filter(Boolean).map(ts=>{ const d=new Date(ts); return d.getHours()*60+d.getMinutes(); });
+    const bedtimeSpread = bedtimeValues.length>1 ? Math.max(...bedtimeValues)-Math.min(...bedtimeValues) : null;
+
+    const html = `
+      <div class="weekly-card" style="margin:0 20px 16px;">
+        <div class="weekly-card-title">📅 截至所选日期的 7 日报告</div>
+        <div class="weekly-card-period">${dailyStats[0].date.getMonth()+1}月${dailyStats[0].date.getDate()}日 - ${dailyStats[6].date.getMonth()+1}月${dailyStats[6].date.getDate()}日</div>
+        <div class="weekly-stats">
+          <div class="weekly-stat"><div class="weekly-stat-value">${sleepFmt(avgSleep)}</div><div class="weekly-stat-label">有睡眠记录日均值</div></div>
+          <div class="weekly-stat"><div class="weekly-stat-value">${recorded.length}/7</div><div class="weekly-stat-label">有记录天数</div></div>
+          <div class="weekly-stat"><div class="weekly-stat-value">${targetDayCount}</div><div class="weekly-stat-label">白天3.5-4.5h天数</div></div>
+        </div>
+      </div>
+
+      <div class="analysis-section-title">睡眠结构</div>
+      <div class="metric-grid">
+        <div class="metric-card"><div class="metric-label">平均日间睡眠</div><div class="metric-value">${sleepFmt(avgDaySleep)}</div><div class="metric-note">仅统计完成配对的睡眠</div></div>
+        <div class="metric-card"><div class="metric-label">平均夜间睡眠</div><div class="metric-value">${sleepFmt(avgNightSleep)}</div><div class="metric-note">跨午夜按入睡日归档</div></div>
+        <div class="metric-card"><div class="metric-label">平均单次小觉</div><div class="metric-value">${sleepFmt(avgNap)}</div><div class="metric-note">样本 ${allNapDurations.length} 次</div></div>
+        <div class="metric-card"><div class="metric-label">平均清醒间隔</div><div class="metric-value">${allWakeWindows.length?sleepFmt(avgWake):'—'}</div><div class="metric-note">样本 ${allWakeWindows.length} 段</div></div>
+        <div class="metric-card"><div class="metric-label">平均入睡耗时</div><div class="metric-value">${allSettle.length?sleepFmt(avgSettle):'—'}</div><div class="metric-note">放下到入睡，样本 ${allSettle.length} 次</div></div>
+        <div class="metric-card"><div class="metric-label">睡前仪式覆盖</div><div class="metric-value">${routineStats.length?Math.round(routineCoverage)+'%':'—'}</div><div class="metric-note">有仪式记录的睡眠占比</div></div>
+      </div>
+
+      <div class="chart-card" style="margin:0 20px 16px;">
+        <div class="chart-title">🌙 7日睡眠组成</div>
+        ${dailyStats.map(stat=>`<div class="analysis-row"><span>${stat.date.getMonth()+1}/${stat.date.getDate()} 周${weekdays[stat.date.getDay()]}</span><div class="analysis-bar"><div class="analysis-bar-fill" style="width:${Math.round(stat.sleepMin/maxSleep*100)}%;background:linear-gradient(90deg,#8DB9F4,#4F7FD9);"></div></div><b>${sleepFmt(stat.sleepMin)}</b></div>`).join('')}
+        <div style="display:flex;gap:14px;margin-top:14px;font-size:10px;color:var(--text-secondary)"><span>日间均值 ${sleepFmt(avgDaySleep)}</span><span>夜间均值 ${sleepFmt(avgNightSleep)}</span></div>
+      </div>
+
+      <div class="analysis-section-title">照护活动</div>
+      <div class="metric-grid">
+        <div class="metric-card"><div class="metric-label">日均喂奶</div><div class="metric-value">${recorded.length?avgFeed.toFixed(1):'—'}次</div><div class="metric-note">完整喂奶时长样本 ${dailyStats.flatMap(stat=>stat.feedMinutes).length} 次</div></div>
+        <div class="metric-card"><div class="metric-label">日均哭闹</div><div class="metric-value">${recorded.length?avgCry.toFixed(1):'—'}次</div><div class="metric-note">平均强度 ${allIntensities.length?avgIntensity.toFixed(1):'—'} / 5</div></div>
+        <div class="metric-card"><div class="metric-label">7日安抚</div><div class="metric-value">${dailyStats.reduce((sum,stat)=>sum+stat.sootheCount,0)}次</div><div class="metric-note">每次点击计为一次</div></div>
+        <div class="metric-card"><div class="metric-label">睡前时间波动</div><div class="metric-value">${bedtimeSpread==null?'—':sleepFmt(bedtimeSpread)}</div><div class="metric-note">最早与最晚夜觉入睡之差</div></div>
+      </div>
+
+      <div class="chart-card" style="margin:0 20px 16px;">
+        <div class="chart-title">📋 每日明细</div>
+        ${dailyStats.map(stat=>`<div style="display:grid;grid-template-columns:52px 1fr;gap:8px;padding:9px 0;border-bottom:1px solid rgba(26,26,26,.05);font-size:12px;"><b>${stat.date.getMonth()+1}/${stat.date.getDate()}</b><span style="color:var(--text-secondary)">睡眠 ${sleepFmt(stat.sleepMin)} · 小觉 ${stat.napCount} · 喂奶 ${stat.feedCount} · 哭闹 ${stat.cryCount}</span></div>`).join('')}
+      </div>
+
+      <div class="insight-card" style="margin:0 20px 16px;">
+        <div class="insight-header"><div class="insight-icon">💡</div><div class="insight-title">数据解读</div></div>
+        <div class="insight-text">${recorded.length
+          ? `本报告基于 ${recorded.length} 个有记录日、${allNapDurations.length} 次完整小觉。${targetDayCount ? `其中 ${targetDayCount} 天的白天睡眠落在计划的 3.5-4.5 小时范围内。` : '目前没有完整记录日落在白天睡眠目标范围内，先检查是否有漏记。'}${bedtimeSpread!=null ? ` 7日夜觉入睡时间跨度为 ${sleepFmt(bedtimeSpread)}。` : ''}这些结果用于观察规律，不用于医学诊断。`
+          : '至少记录一天后才会生成分析。记录越完整，睡眠结构和趋势越可靠。'}</div>
+      </div>`;
+    panel.innerHTML = html;
+  }
+
+  function initDataPage() {
+    renderDataLog();
+    renderDataAnalytics();
+  }
+
+  function showToast(text) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toastText').textContent = text;
+    toast.classList.add('active');
+    setTimeout(() => toast.classList.remove('active'), 2000);
+  }
+
+  function openQuickRecord() {
+    Object.keys(toggles).forEach(k => updateToggleUI(k));
+    document.getElementById('quickRecordOverlay').classList.add('active');
+    document.getElementById('quickRecordSheet').classList.add('active');
+  }
+
+  function closeQuickRecord() {
+    document.getElementById('quickRecordOverlay').classList.remove('active');
+    document.getElementById('quickRecordSheet').classList.remove('active');
+  }
+  window.closeCloudAccount = function() {
+    document.getElementById('cloudAccountOverlay').classList.remove('active');
+    document.getElementById('cloudAccountSheet').classList.remove('active');
+  };
+  window.cloudLogin = () => window.CloudSync?.login?.(document.getElementById('cloudBabyId').value, document.getElementById('cloudPassword').value);
+  window.cloudCreateHousehold = () => window.CloudSync?.createHousehold?.(
+    document.getElementById('cloudGeneratedId').textContent,
+    document.getElementById('cloudGeneratedPw').textContent,
+    document.getElementById('cloudFamilyName').value,
+    document.getElementById('cloudBabyName').value
+  );
+
+  // 随机生成 6 位数字 ID 和 10 位密码
+  window.generateCredentials = function() {
+    const id = String(Math.floor(100000 + Math.random() * 900000));
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let pw = '';
+    for (let i = 0; i < 10; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+    document.getElementById('cloudGeneratedId').textContent = id;
+    document.getElementById('cloudGeneratedPw').textContent = pw;
+    document.getElementById('cloudGeneratedCard').style.display = 'block';
+  };
+
+  // 一键复制（带反馈）
+  window.copyToClipboard = function(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const text = el.textContent.trim();
+    if (!text || text === '--') return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => showToast('✅ 已复制：' + text)).catch(() => fallbackCopy(el));
+    } else {
+      fallbackCopy(el);
+    }
+  };
+  function fallbackCopy(el) {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    try { document.execCommand('copy'); showToast('✅ 已复制到剪贴板'); } catch(e) { showToast('⚠️ 复制失败，请手动长按选择复制'); }
+    sel.removeAllRanges();
+  }
+
+  // 打开家庭账号弹窗时自动生成新凭据
+  window.openCloudAccount = function() {
+    document.getElementById('cloudAccountOverlay').classList.add('active');
+    document.getElementById('cloudAccountSheet').classList.add('active');
+    window.generateCredentials();
+  };
+  window.saveCloudIdentity = () => window.CloudSync?.saveIdentity?.(document.getElementById('cloudDisplayName').value, document.getElementById('cloudIdentity').value);
+  window.cloudSignOut = () => window.CloudSync?.signOut?.();
+  window.chooseIdentity = (identity) => {
+    const name = (document.getElementById('identityPickerName').value || '').trim();
+    if (!name) { alert('请填写显示姓名'); return; }
+    window.CloudSync?.saveIdentity?.(name, identity);
+    localStorage.setItem('babysleep_role_hinted', '1');
+    closeIdentityPicker();
+  };
+  window.openIdentityPicker = () => {
+    document.getElementById('identityPickerOverlay').classList.add('active');
+    document.getElementById('identityPickerSheet').classList.add('active');
+    const cur = localStorage.getItem('babysleep_display_name') || '';
+    document.getElementById('identityPickerName').value = cur;
+  };
+  window.closeIdentityPicker = () => {
+    document.getElementById('identityPickerOverlay').classList.remove('active');
+    document.getElementById('identityPickerSheet').classList.remove('active');
+  };
+
+  function openCryPicker() { document.getElementById('cryPickerOverlay').classList.add('active'); }
+  function closeCryPicker() { document.getElementById('cryPickerOverlay').classList.remove('active'); }
+
+  // ============ 折叠开关 ============
+  window.toggleCollapse = function(headerEl) {
+    headerEl.classList.toggle('open');
+    const body = headerEl.nextElementSibling;
+    if (body) body.classList.toggle('open');
+  };
+  window.switchManualSource = function(source) {
+    document.getElementById('manualPlanPanel')?.classList.toggle('hidden-source', source !== 'plan');
+    document.getElementById('manualAapPanel')?.classList.toggle('hidden-source', source !== 'aap');
+    document.querySelectorAll('.manual-source-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.manualSource === source));
+    document.getElementById('pageManual')?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // ============ 小组件引导 + 关于 ============
+  window.showWidgetGuide = function() {
+    document.getElementById('iosInstall').classList.add('show');
+  };
+  window.showAbout = function() {
+    alert('🌙 BabySleepTracker v2.3\n\n宝宝睡眠训练记录与家庭共享应用\n\n未配置云端时数据保存在当前浏览器；配置 Supabase 后可在家庭成员间同步，并保留本地离线缓存。\n\n睡眠建议不能替代儿科医生的医疗意见。');
+  };
+
+  // ============ 数据导出/导入/清除 ============
+  window.clearAllData = function() {
+    const ok = confirm('⚠️ 将清除所有睡眠记录\n\n此操作不可恢复\n建议先导出备份\n\n点"确定"继续');
+    if (!ok) return;
+    events = [];
+    window.CloudSync?.clearEvents?.();
+    localStorage.removeItem('trainStartDate');
+    localStorage.removeItem('babyName');
+    localStorage.removeItem('babyBirth');
+    localStorage.removeItem('babyGender');
+    saveEvents();
+    renderTimeline();
+    renderLogDay();
+    updatePrediction();
+    updateBabyDisplay();
+    showToast('🗑️ 数据已清除');
+  };
+  window.exportData = function() {
+    const blob = new Blob([JSON.stringify(events, null, 2)], {type: 'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = '豆芽睡眠数据_' + localDateStr(new Date()) + '.json';
+    a.click(); showToast('📥 数据已导出');
+  };
+  window.importData = function() {
+    const input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
+    input.onchange = function() {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!Array.isArray(imported)) throw new Error('Invalid format');
+          if (!confirm('将导入 ' + imported.length + ' 条记录。这会覆盖现有数据，确认？')) return;
+          const normalized = imported.map(normalizeEvent).filter(Boolean);
+          if (!normalized.length && imported.length) throw new Error('No valid events');
+          events = normalized.sort((a,b) => a.ts-b.ts); saveEvents(); renderTimeline(); renderLogDay(); updatePrediction(); renderDataLog(); renderDataAnalytics();
+          showToast('✅ 已导入 ' + normalized.length + ' 条有效记录');
+        } catch(err) { showToast('❌ 文件格式错误'); }
+      };
+      reader.readAsText(input.files[0]);
+    };
+    input.click();
+  };
+
+  // ============ 设置页交互 ============
+  // ============ 事件绑定 ============
+  document.querySelectorAll('.tab-item').forEach(item => {
+    item.addEventListener('click', () => switchTab(item.dataset.tab));
+  });
+
+  document.getElementById('fabRecord').addEventListener('click', openQuickRecord);
+  document.getElementById('quickRecordOverlay').addEventListener('click', closeQuickRecord);
+  document.getElementById('cloudAccountOverlay').addEventListener('click', closeCloudAccount);
+  document.getElementById('eventDetailOverlay').addEventListener('click', closeEventDetail);
+
+  // Quick action toggles
+  document.querySelectorAll('.quick-action[data-toggle]').forEach(action => {
+    action.addEventListener('click', () => {
+      const key = action.dataset.toggle;
+      if (toggles[key]) toggleAction(key);
+    });
+  });
+
+  // Soothe 单击计数
+  document.querySelector('.quick-action[data-action="soothe"]')?.addEventListener('click', () => recordCountAction('soothe', '安抚', '🤗'));
+
+  function recordCountAction(type, label, emoji) {
+    closeQuickRecord();
+    const now = new Date();
+    addEvent({ type, title: label, detail: emoji + ' ' + now.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}), ts: now.getTime() });
+    const today = events.filter(e => new Date(e.ts).toDateString() === new Date().toDateString() && e.type === type).length;
+    const sc = document.getElementById('sootheCounter'); if (sc) sc.textContent = '今日 ' + today + ' 次';
+    showToast(emoji + ' ' + label + ' · 今日' + today + '次');
+  }
+
+  // 更新计数器
+  function updateCounters() {
+    const today = new Date().toDateString();
+    const feeds = events.filter(e => new Date(e.ts).toDateString() === today && e.type === 'feed_start').length;
+    const soothes = events.filter(e => new Date(e.ts).toDateString() === today && e.type === 'soothe').length;
+    const fc = document.getElementById('feedCounter'); if (fc) fc.textContent = '今日 ' + feeds + ' 次';
+    const sc = document.getElementById('sootheCounter'); if (sc) sc.textContent = '今日 ' + soothes + ' 次';
+  }
+
+  // 哭闹强度
+  document.querySelectorAll('.cry-intensity-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.cry-intensity-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    });
+  });
+
+  document.querySelectorAll('.cry-tag').forEach(tag => {
+    tag.addEventListener('click', () => tag.classList.toggle('selected'));
+  });
+
+  document.getElementById('confirmCry').addEventListener('click', () => {
+    const intensity = document.querySelector('.cry-intensity-btn.selected')?.dataset?.intensity || '2';
+    const tags = Array.from(document.querySelectorAll('.cry-tag.selected')).map(t => t.dataset.tag);
+    const tagLabels = { overtired:'过疲', hungry:'饥饿', gas:'胀气', environment:'环境', teething:'长牙', other:'其他' };
+    const tagText = tags.length ? ' · ' + tags.map(tag => tagLabels[tag] || tag).join('、') : '';
+    closeCryPicker();
+    toggles.cry.active = false;
+    updateToggleUI('cry');
+    const emoji = { '1': '😌', '2': '😣', '3': '😭', '4': '😱', '5': '🆘' }[intensity] || '';
+    addEvent({ type: 'cry', title: '哭闹', detail: pendingCryDurationText + '·强度' + intensity + '·' + emoji + tagText, intensity: parseInt(intensity), tags, ts: Date.now() });
+    pendingCryDurationText = '';
+    showToast('😢 哭闹已记录 · 强度 ' + intensity + tagText);
+  });
+
+  // 段控件
+  document.querySelectorAll('.segment-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.segment-item').forEach(s => s.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+
+  // 引导
+  document.getElementById('onboardingNext').addEventListener('click', function() {
+    const stepEl = document.getElementById('onboardingStep' + (this._step || 1));
+    this._step = (this._step || 1) + 1;
+    if (this._step === 2) {
+      document.getElementById('onboardingStep2').style.display = 'block';
+      document.getElementById('dot2').classList.add('active');
+      this.textContent = '下一步';
+    } else if (this._step === 3) {
+      document.getElementById('onboardingStep2').style.display = 'none';
+      document.getElementById('onboardingStep3').style.display = 'flex';
+      document.getElementById('dot3').classList.add('active');
+      this.textContent = '开始使用';
+    } else {
+      document.getElementById('pageOnboarding').classList.add('hidden');
+      showToast('🎉 欢迎使用 BabySleepTracker');
+    }
+  });
+
+  document.querySelectorAll('.option-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    });
+  });
+
+  // 日志页 Day 按钮
+  document.querySelectorAll('.log-day-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.log-day-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  window.addNightWaking = function() {
+    const container = document.getElementById('nightWakings');
+    const count = container.querySelectorAll('.log-night-row').length + 1;
+    const row = document.createElement('div');
+    row.className = 'log-night-row';
+    row.innerHTML = '<span>#' + count + ' 醒</span><input placeholder="--:--"><span>入睡方式</span><input placeholder="安抚/喂奶" style="width:80px"><span>喂奶</span><input placeholder="ml" style="width:40px">';
+    container.appendChild(row);
+  };
+
+  // ============ 深色模式 ============
+  function setDarkMode(mode) {
+    if (mode === 'dark') { document.body.classList.add('dark-mode'); document.getElementById('darkModeToggle').checked = true; document.getElementById('darkModeStatus').textContent = '手动开启深色'; document.getElementById('darkModeSystemMark').textContent = ''; }
+    else if (mode === 'light') { document.body.classList.remove('dark-mode'); document.getElementById('darkModeToggle').checked = false; document.getElementById('darkModeStatus').textContent = '手动开启浅色'; document.getElementById('darkModeSystemMark').textContent = ''; }
+    else { document.getElementById('darkModeStatus').textContent = '跟随系统'; document.getElementById('darkModeSystemMark').textContent = '✓'; const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches; prefersDark ? document.body.classList.add('dark-mode') : document.body.classList.remove('dark-mode'); document.getElementById('darkModeToggle').checked = prefersDark; }
+    localStorage.setItem('darkMode', mode);
+  }
+  window.setDarkMode = setDarkMode;
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('darkMode') || 'system';
+    setDarkMode(saved);
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const onThemeChange = () => { if (localStorage.getItem('darkMode') === 'system') setDarkMode('system'); };
+    if (media.addEventListener) media.addEventListener('change', onThemeChange);
+    else if (media.addListener) media.addListener(onThemeChange);
+  });
+  document.getElementById('darkModeToggle')?.addEventListener('change', (e) => setDarkMode(e.target.checked ? 'dark' : 'light'));
+
+  // ============ 大字号模式 ============
+  function setLargeText(enabled) {
+    const on = Boolean(enabled);
+    document.body.classList.toggle('large-text', on);
+    const toggle = document.getElementById('largeTextToggle');
+    const status = document.getElementById('largeTextStatus');
+    if (toggle) toggle.checked = on;
+    if (status) status.textContent = on ? '已开启 · 适合长辈阅读' : '标准字号';
+    localStorage.setItem('largeText', on ? '1' : '0');
+  }
+  window.setLargeText = setLargeText;
+  setLargeText(localStorage.getItem('largeText') === '1');
+  document.getElementById('largeTextToggle')?.addEventListener('change', event => {
+    setLargeText(event.target.checked);
+    showToast(event.target.checked ? '🔎 大字号模式已开启' : '🔎 已恢复标准字号');
+  });
+
+  // ============ iCloud 备份 ============
+  document.getElementById('icloudToggle')?.addEventListener('change', (e) => {
+    const on = e.target.checked;
+    const status = document.getElementById('icloudStatus');
+    if (on) { status.textContent = '● 已同步'; status.className = 'icloud-indicator on'; showToast('☁️ iCloud 自动备份已开启'); }
+    else { status.textContent = '● 已关闭'; status.className = 'icloud-indicator off'; showToast('⚠️ 关闭后数据不会自动同步'); }
+  });
+
+  // ============ 宝宝档案编辑 ============
+  function updateBabyDisplay() {
+    const name = localStorage.getItem('babyName') || '豆芽';
+    const birth = localStorage.getItem('babyBirth') || '2026-03-24';
+    document.getElementById('babyProfileName').textContent = '👶 ' + name;
+    const d = parseLocalDate(birth);
+    const ageM = Math.floor((Date.now() - d) / (86400000 * 30.44));
+    const ageD = Math.floor(((Date.now() - d) / 86400000) % 30.44);
+    const trainStart = localStorage.getItem('trainStartDate') || localDateStr(new Date());
+    const trainDay = Math.max(1, Math.floor((Date.now() - parseLocalDate(trainStart)) / 86400000) + 1);
+    document.getElementById('babyProfileMeta').textContent = ageM + '月' + ageD + '天 · ' + birth + ' · 训练第' + trainDay + '天';
+  }
+  window.openBabyEdit = function() {
+    document.getElementById('babyNameEdit').value = localStorage.getItem('babyName') || '豆芽';
+    document.getElementById('babyGenderEdit').value = localStorage.getItem('babyGender') || '';
+    document.getElementById('babyBirthEdit').value = localStorage.getItem('babyBirth') || '2026-03-24';
+    document.getElementById('trainStartEdit').value = localStorage.getItem('trainStartDate') || localDateStr(new Date());
+    document.getElementById('babyEditOverlay').classList.add('active');
+    document.getElementById('babyEditSheet').classList.add('active');
+  };
+  window.saveBabyProfile = function() {
+    localStorage.setItem('babyName', document.getElementById('babyNameEdit').value || '豆芽');
+    localStorage.setItem('babyGender', document.getElementById('babyGenderEdit').value);
+    localStorage.setItem('babyBirth', document.getElementById('babyBirthEdit').value || '2026-03-24');
+    localStorage.setItem('trainStartDate', document.getElementById('trainStartEdit').value);
+    document.getElementById('trainStartDate').value = document.getElementById('trainStartEdit').value;
+    document.getElementById('babyEditOverlay').classList.remove('active');
+    document.getElementById('babyEditSheet').classList.remove('active');
+    updateBabyDisplay();
+    updatePrediction();
+    showToast('✅ 宝宝信息已保存');
+  };
+  document.getElementById('babyEditOverlay').addEventListener('click', function() {
+    document.getElementById('babyEditOverlay').classList.remove('active');
+    document.getElementById('babyEditSheet').classList.remove('active');
+  });
+
+  function initSettings() {
+    const trainStartInput = document.getElementById('trainStartDate');
+    const reminderInput = document.getElementById('remindPref');
+    const methodInput = document.getElementById('trainMethodSelect');
+    trainStartInput.value = localStorage.getItem('trainStartDate') || localDateStr(new Date());
+    reminderInput.value = localStorage.getItem('remindPref') || '10';
+    methodInput.value = 'indirect';
+    trainStartInput.addEventListener('change', event => {
+      if (!event.target.value) return;
+      localStorage.setItem('trainStartDate', event.target.value);
+      updateBabyDisplay();
+      updatePrediction();
+      showToast('✅ 训练开始日期已更新');
+    });
+    reminderInput.addEventListener('change', event => {
+      localStorage.setItem('remindPref', event.target.value);
+      showToast('⏰ 已保存提前 ' + event.target.value + ' 分钟的页面内提示偏好');
+    });
+  }
+
+  // ============ 日期轮播滑动支持 ============
+  (function() {
+    const carousel = document.getElementById('dateCarousel');
+    if (!carousel) return;
+    let isDown = false, startX = 0, scrollLeft = 0;
+    carousel.addEventListener('mousedown', (e) => { isDown = true; carousel.style.cursor = 'grabbing'; startX = e.pageX - carousel.offsetLeft; scrollLeft = carousel.scrollLeft; });
+    carousel.addEventListener('mouseleave', () => { isDown = false; carousel.style.cursor = 'grab'; });
+    carousel.addEventListener('mouseup', () => { isDown = false; carousel.style.cursor = 'grab'; });
+    carousel.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); const x = e.pageX - carousel.offsetLeft; carousel.scrollLeft = scrollLeft - (x - startX) * 1.5; });
+    carousel.addEventListener('touchstart', (e) => { startX = e.touches[0].pageX; scrollLeft = carousel.scrollLeft; }, { passive: true });
+    carousel.addEventListener('touchmove', (e) => { const x = e.touches[0].pageX; carousel.scrollLeft = scrollLeft - (x - startX) * 1.5; }, { passive: true });
+    carousel.style.cursor = 'grab';
+  })();
+
+  window.BabySleepApp = {
+    getEvents: () => events.map(event => ({...event})),
+    replaceEvents: remoteEvents => {
+      events = (Array.isArray(remoteEvents) ? remoteEvents : []).map(normalizeEvent).filter(Boolean).sort((a,b)=>a.ts-b.ts);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+      Object.values(toggles).forEach(toggle => { toggle.active=false; toggle.startTime=null; toggle.sessionId=null; });
+      restoreToggleStates();
+      applyIdentityRole();
+      renderDateCarousel(); renderTimeline(); renderLogDay(); updatePrediction(); renderDataLog(); renderDataAnalytics();
+    },
+    notify: showToast,
+    afterLogin: () => {
+      // 登录后拉取云端状态并应用
+      applyIdentityRole();
+      renderDateCarousel(); renderTimeline(); renderLogDay(); updatePrediction();
+    },
+    applyState: (stateMap) => {
+      // 云端状态机回调：校正本地 toggle 状态
+      const map = { sleep: 'nap' };
+      Object.keys(map).forEach(cloudType => {
+        const localKey = map[cloudType];
+        if (stateMap[cloudType] !== undefined) {
+          const serverState = stateMap[cloudType]; // 'started' / 'ended'
+          const t = toggles[localKey];
+          if (t) {
+            const shouldActive = serverState === 'started';
+            if (t.active !== shouldActive) {
+              t.active = shouldActive;
+              if (shouldActive && !t.startTime) t.startTime = Date.now();
+              if (!shouldActive) t.startTime = null;
+              updateToggleUI(localKey);
+            }
+          }
+        }
+      });
+      // 其他直接对应
+      ['feed','ritual','putdown','cry'].forEach(localKey => {
+        if (stateMap[localKey] !== undefined) {
+          const t = toggles[localKey];
+          const shouldActive = stateMap[localKey] === 'started';
+          if (t && t.active !== shouldActive) {
+            t.active = shouldActive;
+            if (shouldActive && !t.startTime) t.startTime = Date.now();
+            if (!shouldActive) t.startTime = null;
+            updateToggleUI(localKey);
+          }
+        }
+      });
+    },
+    showIdentityPicker: () => {
+      if (typeof window.openIdentityPicker === 'function') window.openIdentityPicker();
+    }
+  };
+
+  // 查看者身份：隐藏/禁用记录按钮
+  function applyIdentityRole() {
+    const identity = (window.CloudSync?.getIdentityLocal?.() || 'editor');
+    const isViewer = identity === 'viewer';
+    const fab = document.getElementById('fabRecord');
+    if (fab) fab.style.display = isViewer ? 'none' : 'flex';
+    // 隐藏所有 quick-action（toggle）
+    document.querySelectorAll('.quick-action[data-toggle], .quick-action[data-action]').forEach(el => {
+      el.style.display = isViewer ? 'none' : 'flex';
+    });
+  }
+
+  // 事件详情时长联动：时间/日期变化时即时重算
+  document.addEventListener('input', (e) => {
+    if (e.target && (e.target.id === 'detailDate' || e.target.id === 'detailTime')) {
+      // 只读联动：仅更新显示，不写入 event.ts
+      const durEl = document.getElementById('detailDuration');
+      if (!durEl) return;
+      const ev = events.find(x => x.id === currentDetailEventId);
+      if (!ev) return;
+      const dateStr = document.getElementById('detailDate').value;
+      const timeStr = document.getElementById('detailTime').value;
+      if (dateStr && timeStr) {
+        const [hh, mm] = timeStr.split(':').map(n => parseInt(n));
+        const nd = parseLocalDate(dateStr);
+        nd.setHours(hh, mm, 0, 0);
+        const probe = { ...ev, ts: nd.getTime() };
+        const dur = computeDurationForEvent(probe);
+        durEl.textContent = dur === null ? '--' : dur;
+      }
+    }
+  });
+
+  // ============ 初始化 ============
+  restoreToggleStates();
+  initSettings();
+  renderDateCarousel();
+  setupDateCarouselInfiniteScroll();
+  applyIdentityRole();
+  renderTimeline();
+  renderLogDay();
+  initDataPage();
+  updatePrediction();
+  updateBabyDisplay();
+  window.CloudSync?.init?.(window.BabySleepApp);
+
+  // Safari/PWA：启用离线缓存，并在每次启动时检查新版本。
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js', { scope: './' })
+        .then(registration => registration.update())
+        .catch(error => console.warn('[PWA] Service Worker 注册失败：', error));
+    });
+  }
+</script>
+
+</body>
+</html>
