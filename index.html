@@ -184,12 +184,15 @@
     left: 0;
     right: 0;
     height: var(--tab-height);
-    background: #0F0F0F;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     display: flex;
     justify-content: space-around;
-    align-items: flex-start;
-    padding: 10px 16px max(20px, var(--safe-bottom));
+    align-items: center;
+    padding: 6px 16px max(16px, var(--safe-bottom));
     z-index: 100;
+    border-top: 1px solid rgba(0,0,0,0.08);
   }
 
   .tab-item {
@@ -409,7 +412,7 @@
   }
 
   .timeline-date {
-    font-size: 22px;
+    font-size: 25px;
     font-weight: 700;
   }
 
@@ -1577,35 +1580,24 @@
     overscroll-behavior-y: none;
   }
   body {
-    padding-top: var(--safe-top);
-    padding-bottom: var(--safe-bottom);
-    /* 两侧留出返回手势和曲面屏边缘 */
-    padding-left: max(0px, var(--safe-left));
-    padding-right: max(0px, var(--safe-right));
-    min-height: 100vh;
-    min-height: 100dvh;
+    /* body 不再铺全局 safe-area padding，仅 targeted 元素避让 */
+    background: var(--bg);
   }
-  /* 顶部导航：叠加 safe-top，确保不被灵动岛/状态栏遮挡 */
-  .timeline-header, .top-header, .header, .date-carousel-wrap, .page-title-wrap {
-    padding-top: max(8px, var(--safe-top));
+  .page {
+    padding-top: calc(6px + var(--safe-top));
   }
-  .cloud-status-pill {
-    top: calc(8px + var(--safe-top));
-  }
-  /* 底部：所有绝对定位的底部元素都加上 safe-bottom */
-  .tab-bar, .bottom-actions, .quick-action-bar, .footer-cta {
-    padding-bottom: calc(12px + var(--safe-bottom));
+  .timeline-header, .top-header {
+    padding-top: max(4px, var(--safe-top));
   }
   #fabRecord {
-    bottom: calc(80px + max(var(--safe-bottom), 16px));
+    bottom: calc(68px + max(var(--safe-bottom), 4px));
   }
-  /* 弹窗 (bottom-sheet) 底部留出 Android 导航栏空隙 */
   .modal-bottom-sheet {
-    padding-bottom: calc(16px + var(--safe-bottom) + 10px);
+    padding-bottom: calc(12px + max(var(--safe-bottom), 4px));
     border-radius: 24px 24px 0 0;
   }
   .modal-bottom-sheet .sheet-handle {
-    margin-top: 12px;
+    margin-top: 8px;
   }
   /* 九月分界 */
   .date-month-divider {
@@ -2402,40 +2394,51 @@ function dismissInstallGuide(){
       <div class="sheet-title">家庭账号与同步</div>
       <div id="cloudConfigHint" class="recent-action-hint" style="margin-bottom:14px;">当前为本地模式。填写 config.js 中的 Supabase 地址和公开密钥后即可启用登录。</div>
       <div id="cloudSignedOut">
-        <div class="form-field"><div class="form-label">宝宝ID号（登录已有家庭）</div><input type="text" class="form-input" id="cloudBabyId" placeholder="输入数字ID" autocomplete="username" autocapitalize="none"></div>
+        <!-- 登录 -->
+        <div class="form-field"><div class="form-label">宝宝ID号</div><input type="text" class="form-input" id="cloudBabyId" placeholder="输入已有的数字ID" autocomplete="username" autocapitalize="none"></div>
         <div class="form-field"><div class="form-label">密码</div><input type="password" class="form-input" id="cloudPassword" placeholder="家庭共同密码" autocomplete="current-password"></div>
         <button class="btn-confirm" onclick="cloudLogin()">登录家庭</button>
 
-        <div style="text-align:center;color:var(--text-secondary);font-size:12px;margin:16px 0;">首次使用？创建新家庭 ⬇</div>
+        <!-- 创建 -->
+        <div style="text-align:center;color:var(--text-secondary);font-size:12px;margin:18px 0;">首次使用？创建新家庭</div>
         <div class="form-field"><div class="form-label">家庭名称</div><input class="form-input" id="cloudFamilyName" placeholder="例如：豆芽之家"></div>
         <div class="form-field"><div class="form-label">宝宝名字</div><input class="form-input" id="cloudBabyName" placeholder="例如：豆芽"></div>
 
-        <div class="card-generated" id="cloudGeneratedCard" style="display:none;margin-bottom:12px;padding:14px;background:rgba(79,209,197,0.08);border-radius:14px;border:1px solid rgba(79,209,197,0.2);">
-          <div class="form-field" style="margin-bottom:10px;">
-            <div class="form-label" style="margin-bottom:4px;">自动生成的宝宝ID号 <span style="font-size:11px;color:var(--text-tertiary);">（点击复制分享给家人）</span></div>
-            <div class="copy-row" style="display:flex;align-items:center;gap:8px;">
-              <code class="generated-val" id="cloudGeneratedId" style="flex:1;padding:10px 12px;background:rgba(255,255,255,0.7);border-radius:10px;font-size:22px;font-weight:800;letter-spacing:4px;text-align:center;user-select:all;">--</code>
-              <button class="btn-copy" onclick="copyToClipboard('cloudGeneratedId')" style="flex:0 0 auto;padding:10px 14px;background:var(--mint);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">复制</button>
-            </div>
+        <div class="card-generated" id="cloudGeneratedCard" style="display:none;margin-bottom:10px;padding:12px;background:rgba(79,209,197,0.06);border-radius:12px;border:1px solid rgba(79,209,197,0.15);">
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">系统已自动生成凭据（可修改密码）</div>
+          <div class="copy-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <code class="generated-val" id="cloudGeneratedId" style="flex:1;padding:8px 10px;background:rgba(255,255,255,0.7);border-radius:8px;font-size:20px;font-weight:800;letter-spacing:3px;text-align:center;user-select:all;">--</code>
+            <button class="btn-copy" onclick="copyToClipboard('cloudGeneratedId')" style="padding:8px 12px;background:var(--mint);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">复制</button>
           </div>
-          <div class="form-field">
-            <div class="form-label" style="margin-bottom:4px;">自动生成的密码 <span style="font-size:11px;color:var(--text-tertiary);">（点击复制）</span></div>
-            <div class="copy-row" style="display:flex;align-items:center;gap:8px;">
-              <code class="generated-val" id="cloudGeneratedPw" style="flex:1;padding:10px 12px;background:rgba(255,255,255,0.7);border-radius:10px;font-size:16px;font-weight:700;letter-spacing:2px;text-align:center;user-select:all;">--</code>
-              <button class="btn-copy" onclick="copyToClipboard('cloudGeneratedPw')" style="flex:0 0 auto;padding:10px 14px;background:var(--mint);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">复制</button>
-            </div>
+          <input type="text" class="form-input" id="cloudGeneratedPw" placeholder="自定义密码（留空=使用生成的）" value="" style="margin-bottom:6px;font-size:15px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <code class="generated-val" id="cloudDefaultPw" style="flex:1;padding:6px;background:rgba(255,255,255,0.5);border-radius:6px;font-size:12px;color:var(--text-tertiary);text-align:center;">--</code>
+            <button class="btn-copy" onclick="copyToClipboard('cloudDefaultPw')" style="padding:6px 10px;background:transparent;color:var(--mint);border:1px solid var(--mint);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">复制</button>
           </div>
         </div>
 
-        <button class="btn-secondary" onclick="generateCredentials()" style="margin-bottom:10px;width:100%;padding:12px;background:transparent;border:1px dashed rgba(26,26,26,0.2);border-radius:14px;color:var(--text-secondary);font-size:13px;cursor:pointer;">🔄 重新生成ID和密码</button>
         <button class="btn-confirm" style="background:linear-gradient(135deg,#4FD1C5,#2CB7AB);" onclick="cloudCreateHousehold()">创建家庭</button>
-        <div class="recent-action-hint" style="margin-top:10px;">💡 ID 和密码请保存好并分享给家人；家人用同一组凭据登录即可共享记录。</div>
+        <div class="recent-action-hint" style="margin-top:8px;">💡 ID 发给家人，家人用同一组凭据登录。</div>
       </div>
       <div id="cloudSignedIn" style="display:none;">
         <div class="recent-action-hint" id="cloudUserEmail" style="margin-bottom:12px;"></div>
         <div class="form-field"><div class="form-label">本机显示姓名（记录者）</div><input class="form-input" id="cloudDisplayName" placeholder="例如：妈妈"></div>
         <div class="form-field"><div class="form-label">本机身份</div><select class="form-input" id="cloudIdentity"><option value="editor">编辑者（可记录/修改）</option><option value="viewer">查看者（只读）</option></select></div>
         <button class="btn-confirm" onclick="saveCloudIdentity()">保存本机身份</button>
+
+        <!-- 凭据分享区 -->
+        <div class="card-generated" style="margin-top:14px;padding:10px 12px;background:rgba(255,154,108,0.06);border-radius:12px;border:1px solid rgba(255,154,108,0.15);">
+          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px;">分享凭据给家人</div>
+          <div class="copy-row" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <code id="signedInBabyId" style="flex:1;padding:6px;background:rgba(255,255,255,0.6);border-radius:6px;font-size:16px;font-weight:800;text-align:center;user-select:all;">--</code>
+            <button class="btn-copy" onclick="copyToClipboard('signedInBabyId')" style="padding:6px 10px;background:var(--primary);color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">复制ID</button>
+          </div>
+          <div class="copy-row" style="display:flex;align-items:center;gap:6px;">
+            <code id="signedInPassword" style="flex:1;padding:6px;background:rgba(255,255,255,0.4);border-radius:6px;font-size:13px;text-align:center;user-select:all;color:var(--text-tertiary);">家庭共同密码</code>
+            <button class="btn-copy" onclick="copyToClipboard('signedInPassword')" style="padding:6px 10px;background:transparent;color:var(--primary);border:1px solid var(--primary);border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">复制</button>
+          </div>
+        </div>
+
         <div id="cloudFamilyInfo" class="recent-action-hint" style="display:block;margin-top:14px;"></div>
         <button onclick="cloudSignOut()" style="width:100%;padding:14px;margin-top:14px;color:#E85D75;font-size:14px;font-weight:700;">退出登录</button>
       </div>
@@ -2769,61 +2772,60 @@ function dismissInstallGuide(){
 
   function toggleAction(key) {
     const t = toggles[key];
-    const typeMap = { feed: 'feed', ritual: 'ritual', putdown: 'putdown', nap: 'sleep', cry: 'cry' };
-    const cloudType = typeMap[key];
     const op = t.active ? 'end' : 'start';
     const ts = Date.now();
 
-    // 同步调用状态机（在线时）；离线保持本地逻辑
-    const applyLocal = () => {
-      if (!t.active) {
-        // START
-        t.active = true;
-        t.startTime = ts;
-        const eventType = key === 'cry' ? 'cry_start' : (key + '_start');
-        const startedEvent = addEvent({ type: eventType, title: t.labelOn, detail: new Date(ts).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}), ts, activityKey:key, status:'active' });
-        t.sessionId = startedEvent.id;
-        if (startedEvent) startedEvent.sessionId = startedEvent.id;
-        updateToggleUI(key);
-        if (t.startToast) showToast(t.startToast);
-      } else {
-        // END
-        t.active = false;
-        const elapsed = Math.max(0, Math.floor((Date.now() - t.startTime) / 1000));
-        const m = Math.floor(elapsed / 60), s = elapsed % 60;
-        const sessionId = t.sessionId;
-        const startEvent = events.find(event => event.id === sessionId);
-        if (startEvent) startEvent.status = 'closed';
-        updateToggleUI(key);
-
-        if (key === 'cry') {
-          pendingCryDurationText = m + '分钟' + (s ? s + '秒' : '');
-          document.getElementById('crySummary').innerHTML = '哭闹时长: <strong>' + m + ' 分钟 ' + s + ' 秒</strong>';
-          closeQuickRecord();
-          setTimeout(openCryPicker, 300);
-          return;
-        }
-
-        const eventType = key + '_end';
-        addEvent({ type: eventType, title: t.labelOff, detail: '持续 ' + m + 'm' + s + 's', ts, activityKey:key, sessionId, status:'complete' });
-        if (t.endToast) showToast(t.endToast);
-      }
-    };
-
-    if (window.CloudSync?.isSignedIn?.() && navigator.onLine && cloudType) {
-      window.CloudSync.appendActivity(cloudType, op, ts).then(result => {
-        if (result && result.ignored) {
-          // 非法事件：静默回滚，不弹窗
-          showToast('⚠️ 状态冲突，已同步至服务器当前状态');
-          // 不改变本地 UI，等下次轮询校正
-          window.CloudSync.refreshActivityState?.();
-          return;
-        }
-        applyLocal();
-      }).catch(() => applyLocal());
+    // 乐观更新：立即应用本地 UI（不等待云端）
+    if (!t.active) {
+      t.active = true;
+      t.startTime = ts;
+      const eventType = key === 'cry' ? 'cry_start' : (key + '_start');
+      const startedEvent = addEvent({ type: eventType, title: t.labelOn, detail: new Date(ts).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}), ts, activityKey:key, status:'active' });
+      t.sessionId = startedEvent.id;
+      if (startedEvent) startedEvent.sessionId = startedEvent.id;
+      updateToggleUI(key);
+      if (t.startToast) showToast(t.startToast);
     } else {
-      applyLocal();
+      t.active = false;
+      const elapsed = Math.max(0, Math.floor((Date.now() - t.startTime) / 1000));
+      const m = Math.floor(elapsed / 60), s = elapsed % 60;
+      const sessionId = t.sessionId;
+      const startEvent = events.find(event => event.id === sessionId);
+      if (startEvent) startEvent.status = 'closed';
+      updateToggleUI(key);
+
+      if (key === 'cry') {
+        pendingCryDurationText = m + '分钟' + (s ? s + '秒' : '');
+        document.getElementById('crySummary').innerHTML = '哭闹时长: <strong>' + m + ' 分钟 ' + s + ' 秒</strong>';
+        closeQuickRecord();
+        setTimeout(openCryPicker, 300);
+        // bg sync
+        const typeMap2 = { nap: 'sleep' };
+        const ct2 = typeMap2[key] || key;
+        tryCallCloud(ct2, op, ts);
+        return;
+      }
+
+      const eventType = key + '_end';
+      addEvent({ type: eventType, title: t.labelOff, detail: '持续 ' + m + 'm' + s + 's', ts, activityKey:key, sessionId, status:'complete' });
+      if (t.endToast) showToast(t.endToast);
     }
+
+    // 后台异步同步云端状态机（失败/冲突静默处理）
+    const typeMap = { nap: 'sleep' };
+    const cloudType = typeMap[key] || key;
+    tryCallCloud(cloudType, op, ts);
+  }
+
+  // 后台静默同步云端 toggle 状态；冲突时静默校正本地 UI
+  function tryCallCloud(cloudType, op, ts) {
+    if (!window.CloudSync?.isSignedIn?.() || !navigator.onLine) return;
+    window.CloudSync.appendActivity(cloudType, op, ts).then(result => {
+      if (result && result.ignored) {
+        // 静默回滚：云端拒绝（重复 op），恢复本地 toggle 与云端一致
+        window.CloudSync.refreshActivityState?.();
+      }
+    }).catch(() => {});
   }
 
   function addEvent(evt) {
@@ -2945,8 +2947,9 @@ function dismissInstallGuide(){
     const cTable = trainDay <= comfortIntervals.length ? comfortIntervals[trainDay-1] : comfortIntervals[7];
     const ivEl = document.getElementById('trainIntervalDisplay');
     if (ivEl) ivEl.textContent = '第' + trainDay + '天 · 安抚 ' + cTable[0] + '/' + cTable[1] + '/' + cTable[2] + ' 分钟';
-    // 日期头
+    // 日期头（含时间）
     document.getElementById('timelineDate').textContent =
+      new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}) + ' · ' +
       (selectedDate.getMonth()+1) + '月' + selectedDate.getDate() + '日 周' + ['日','一','二','三','四','五','六'][selectedDate.getDay()];
     const todayEvents = eventsOnDate(selectedDate);
     const cryEvents = todayEvents.filter(e => e.type === 'cry');
@@ -3725,22 +3728,33 @@ function dismissInstallGuide(){
     document.getElementById('cloudAccountSheet').classList.remove('active');
   };
   window.cloudLogin = () => window.CloudSync?.login?.(document.getElementById('cloudBabyId').value, document.getElementById('cloudPassword').value);
-  window.cloudCreateHousehold = () => window.CloudSync?.createHousehold?.(
-    document.getElementById('cloudGeneratedId').textContent,
-    document.getElementById('cloudGeneratedPw').textContent,
-    document.getElementById('cloudFamilyName').value,
-    document.getElementById('cloudBabyName').value
-  );
+  window.cloudCreateHousehold = () => {
+    const genId = document.getElementById('cloudGeneratedId').textContent.trim();
+    const customPw = document.getElementById('cloudGeneratedPw').value.trim();
+    const defaultPw = document.getElementById('cloudDefaultPw').textContent.trim();
+    const pw = customPw || defaultPw || '123456';
+    // 保存凭据到 signed-in 区
+    document.getElementById('signedInBabyId').textContent = genId;
+    document.getElementById('signedInPassword').textContent = pw;
+    window.CloudSync?.createHousehold?.(genId, pw,
+      document.getElementById('cloudFamilyName').value,
+      document.getElementById('cloudBabyName').value
+    );
+  };
 
-  // 随机生成 6 位数字 ID 和 10 位密码
+  // 随机生成 6 位数字 ID 和默认密码
   window.generateCredentials = function() {
     const id = String(Math.floor(100000 + Math.random() * 900000));
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
     let pw = '';
     for (let i = 0; i < 10; i++) pw += chars[Math.floor(Math.random() * chars.length)];
     document.getElementById('cloudGeneratedId').textContent = id;
-    document.getElementById('cloudGeneratedPw').textContent = pw;
+    document.getElementById('cloudDefaultPw').textContent = pw;
+    document.getElementById('cloudGeneratedPw').value = '';
     document.getElementById('cloudGeneratedCard').style.display = 'block';
+    // 同时填入 signed-in 区
+    document.getElementById('signedInBabyId').textContent = id;
+    document.getElementById('signedInPassword').textContent = pw;
   };
 
   // 一键复制（带反馈）
@@ -4106,32 +4120,16 @@ function dismissInstallGuide(){
       renderDateCarousel(); renderTimeline(); renderLogDay(); updatePrediction();
     },
     applyState: (stateMap) => {
-      // 云端状态机回调：校正本地 toggle 状态
-      const map = { sleep: 'nap' };
-      Object.keys(map).forEach(cloudType => {
-        const localKey = map[cloudType];
+      // 云端状态机回调：仅校正本地 toggle 显示，不覆盖开始时间
+      ['feed','ritual','putdown','cry','nap'].forEach(localKey => {
+        const cloudType = localKey === 'nap' ? 'sleep' : localKey;
         if (stateMap[cloudType] !== undefined) {
           const serverState = stateMap[cloudType]; // 'started' / 'ended'
           const t = toggles[localKey];
-          if (t) {
-            const shouldActive = serverState === 'started';
-            if (t.active !== shouldActive) {
-              t.active = shouldActive;
-              if (shouldActive && !t.startTime) t.startTime = Date.now();
-              if (!shouldActive) t.startTime = null;
-              updateToggleUI(localKey);
-            }
-          }
-        }
-      });
-      // 其他直接对应
-      ['feed','ritual','putdown','cry'].forEach(localKey => {
-        if (stateMap[localKey] !== undefined) {
-          const t = toggles[localKey];
-          const shouldActive = stateMap[localKey] === 'started';
-          if (t && t.active !== shouldActive) {
+          if (!t) return;
+          const shouldActive = serverState === 'started';
+          if (t.active !== shouldActive) {
             t.active = shouldActive;
-            if (shouldActive && !t.startTime) t.startTime = Date.now();
             if (!shouldActive) t.startTime = null;
             updateToggleUI(localKey);
           }
