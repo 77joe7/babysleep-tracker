@@ -184,31 +184,54 @@
     left: 0;
     right: 0;
     height: var(--tab-height);
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 6px 16px max(16px, var(--safe-bottom));
+    padding: 4px 10px max(16px, var(--safe-bottom));
     z-index: 100;
-    border-top: 1px solid rgba(0,0,0,0.08);
+    border-top: 1px solid rgba(0,0,0,0.06);
   }
 
   .tab-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 11px;
+    gap: 3px;
+    color: var(--text-tertiary);
+    font-size: 10px;
+    font-weight: 600;
     transition: color 0.2s;
     flex: 1;
+    cursor: pointer;
   }
 
   .tab-item.active {
     color: var(--primary);
   }
+  .tab-item svg { transition: transform 0.15s; }
+  .tab-item:active svg { transform: scale(0.88); }
+
+  .tab-fab {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+    color: white;
+    font-size: 26px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(255,122,71,0.35);
+    margin: 0 8px 8px 8px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    flex-shrink: 0;
+  }
+  .tab-fab:active { transform: scale(0.92); box-shadow: 0 4px 12px rgba(255,122,71,0.3); }
 
   .tab-item .icon {
     font-size: 24px;
@@ -399,110 +422,93 @@
     padding: 0 20px 20px;
   }
 
-  /* 时间轴事件区容器：与 summary/hero 等宽 */
-  .timeline-section {
-    padding: 0;
-  }
-
-  .timeline-header {
-    padding: 16px 20px 8px;
+  /* 顶部时间区：第1行 时间(大)+日期(小)，右侧训练Day标签 */
+  .tl-top-bar {
     display: flex;
+    align-items: flex-end;
     justify-content: space-between;
-    align-items: center;
+    padding: 12px 0 6px;
+    min-height: 52px;
   }
-
-  .timeline-date {
-    font-size: 25px;
-    font-weight: 700;
+  .tl-time-wrap { display: flex; flex-direction: column; }
+  .tl-time-now {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
   }
-
-  .timeline-day-tag {
-    background: var(--card);
-    border-radius: 20px;
-    padding: 6px 14px;
+  .tl-date-sm {
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--text-secondary);
-    box-shadow: var(--shadow);
+    margin-top: 1px;
   }
-
-  .timeline-day-tag strong {
-    color: var(--primary);
+  .tl-train-badge {
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-deep));
+    color: white;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
   }
 
   /* 日期轮播 */
   .date-carousel {
-    padding: 12px 20px 16px;
+    padding: 10px 0 14px;
     display: flex;
     gap: 8px;
     overflow-x: auto;
     scrollbar-width: none;
   }
-
   .date-carousel::-webkit-scrollbar { display: none; }
 
   .date-item {
     flex-shrink: 0;
-    width: 56px;
-    height: 72px;
-    border-radius: 18px;
+    min-width: 48px;
+    height: 66px;
+    border-radius: 16px;
     background: var(--card);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    box-shadow: var(--shadow);
+    gap: 3px;
+    box-shadow: none;
     transition: all 0.2s;
+    opacity: 0.55;
   }
-
   .date-item.active {
-    background: #0F0F0F;
+    background: var(--text-primary);
     color: white;
-    transform: scale(1.05);
+    transform: none;
+    opacity: 1;
+    box-shadow: 0 4px 14px rgba(26,26,26,0.15);
   }
   .date-item.today:not(.active) {
     border: 1.5px solid var(--primary);
+    opacity: 0.75;
   }
+  .date-item .weekday { font-size: 10px; font-weight: 500; opacity: 0.7; }
+  .date-item .day { font-size: 18px; font-weight: 700; }
+  .date-item .dot-indicator { width: 4px; height: 4px; border-radius: 50%; background: var(--primary); margin-top: 1px; }
+  .date-item.active .dot-indicator { background: white; }
+  .date-item.out-range { opacity: 0.25; }
 
-  .date-item .weekday {
-    font-size: 11px;
-    font-weight: 500;
-    opacity: 0.7;
-  }
-
-  .date-item .day {
-    font-size: 20px;
+  .date-month-divider {
+    flex: 0 0 auto;
+    align-self: center;
+    padding: 3px 8px;
+    margin: 0 2px;
+    font-size: 10px;
     font-weight: 700;
+    color: var(--text-secondary);
+    background: rgba(255,154,108,0.08);
+    border-radius: 999px;
   }
 
-  .date-item .dot-indicator {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: var(--primary);
-    margin-top: 2px;
-  }
-
-  .date-item:not(.active) .dot-indicator {
-    display: none;
-  }
-
-  .timeline-section-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; padding:0 4px; position:relative; z-index:40; }
-  .timeline-section-header .section-title { margin:0; padding:0; }
-  .timeline-filter-wrap { position:relative; }
-  .timeline-filter-button { display:flex; align-items:center; gap:6px; padding:7px 11px; border-radius:13px; background:var(--card); color:var(--text-primary); font-size:12px; font-weight:700; box-shadow:var(--shadow); }
-  .timeline-filter-button.active { background:#1A1A1A; color:white; }
-  .timeline-filter-menu { position:absolute; top:calc(100% + 8px); right:0; width:190px; padding:8px; border-radius:16px; background:var(--card); box-shadow:0 16px 42px rgba(0,0,0,.18); display:none; }
-  .timeline-filter-menu.open { display:block; }
-  .filter-option { display:flex; align-items:center; gap:9px; padding:10px 8px; border-radius:10px; font-size:13px; color:var(--text-primary); }
-  .filter-option:active { background:rgba(26,26,26,.05); }
-  .filter-option input { width:18px; height:18px; accent-color:#4F7FD9; }
-  .filter-option-label { flex:1; }
-  .filter-count { min-width:17px; height:17px; padding:0 4px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; background:rgba(0,0,0,.07); font-size:9px; }
-
-  .timeline-date { cursor: pointer; border-radius: 10px; padding: 3px 6px; margin-left: -6px; }
-  .timeline-date:active { background: rgba(255,255,255,0.55); }
+  /* 时间轴 section */
 
   /* Hero 卡片 */
   .hero-card {
@@ -625,29 +631,66 @@
     opacity: 0.85;
   }
 
-  /* 今日摘要卡 */
+  /* 今日摘要卡 — 统一图标风格 */
   .summary-card {
     margin: 0 0 16px;
     background: var(--card);
     border-radius: var(--radius-card);
-    padding: 16px;
+    padding: 14px 12px;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+    gap: 6px;
     box-shadow: var(--shadow);
   }
-
   .summary-item {
     text-align: center;
   }
-
   .summary-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    margin: 0 auto 4px;
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    margin: 0 auto 3px;
     display: flex;
     align-items: center;
+    justify-content: center;
+  }
+  .summary-icon svg { width: 16px; height: 16px; }
+  .summary-icon.sleep { background: rgba(79,127,217,0.12); color: #4F7FD9; }
+  .summary-icon.nap   { background: rgba(79,209,197,0.12); color: #4FD1C5; }
+  .summary-icon.cry   { background: rgba(248,165,194,0.14); color: #F8A5C2; }
+  .summary-icon.feed  { background: rgba(196,181,253,0.15); color: #C4B5FD; }
+  .summary-value { font-size: 18px; font-weight: 800; color: var(--text-primary); }
+  .summary-label { font-size: 10px; font-weight: 600; color: var(--text-secondary); }
+
+  /* 侧边浮动按钮 */
+  .side-float {
+    position: fixed;
+    right: 12px;
+    bottom: calc(130px + var(--safe-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 90;
+  }
+  .side-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--card);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .side-btn:active {
+    background: var(--text-primary);
+    color: white;
+    transform: scale(0.92);
+  }
     justify-content: center;
     font-size: 16px;
     color: white;
@@ -1714,9 +1757,12 @@ function dismissInstallGuide(){
 
     <!-- 时间轴主页 -->
     <div class="page page-timeline" id="pageTimeline">
-      <div class="timeline-header">
-        <div class="timeline-date" id="timelineDate" role="button" tabindex="0" aria-label="返回今天" title="点击返回今天" onclick="goToday()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();goToday();}">--</div>
-        <div class="timeline-day-tag" id="timelineDayTag">准备训练</div>
+      <div class="tl-top-bar">
+        <div class="tl-time-wrap">
+          <div class="tl-time-now" id="tlTimeNow">--:--</div>
+          <div class="tl-date-sm" id="tlDateSm">--</div>
+        </div>
+        <div class="tl-train-badge" id="tlTrainDay">训练 Day --</div>
       </div>
 
       <div class="date-carousel" id="dateCarousel"></div>
@@ -1747,22 +1793,22 @@ function dismissInstallGuide(){
 
       <div class="summary-card">
         <div class="summary-item">
-          <div class="summary-icon sleep">😴</div>
+          <div class="summary-icon sleep"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
           <div class="summary-value" id="sumTotalSleep">--</div>
           <div class="summary-label">总睡眠</div>
         </div>
         <div class="summary-item">
-          <div class="summary-icon nap">🌙</div>
+          <div class="summary-icon nap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/></svg></div>
           <div class="summary-value" id="sumNapCount">--</div>
           <div class="summary-label">小觉</div>
         </div>
         <div class="summary-item">
-          <div class="summary-icon cry">😢</div>
+          <div class="summary-icon cry"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="9" r="1.5" fill="currentColor"/><circle cx="16" cy="9" r="1.5" fill="currentColor"/><path d="M12 21c-4 0-7-3-4-7 1-1.5 2.5-1 4 0 1.5-1 3-1.5 4 0 3 4 0 7-4 7z"/></svg></div>
           <div class="summary-value" id="sumCryCount">--</div>
           <div class="summary-label">哭闹</div>
         </div>
         <div class="summary-item">
-          <div class="summary-icon feed">🍼</div>
+          <div class="summary-icon feed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2v7.5L6 22h12l-4-12.5V2"/><line x1="12" y1="7" x2="12" y2="2"/></svg></div>
           <div class="summary-value" id="sumFeedCount">--</div>
           <div class="summary-label">喂养</div>
         </div>
@@ -2366,11 +2412,33 @@ function dismissInstallGuide(){
 
     <!-- TabBar -->
     <div class="tab-bar" id="tabBar">
-      <div class="tab-item active" data-tab="timeline"><div class="icon">🏠</div><div>时间轴</div></div>
-      <div class="tab-item" data-tab="manual"><div class="icon">📖</div><div>操作手册</div></div>
+      <div class="tab-item active" data-tab="timeline">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1.5" fill="currentColor"/><circle cx="4" cy="12" r="1.5" fill="currentColor"/><circle cx="4" cy="18" r="1.5" fill="currentColor"/></svg>
+        <span>时间轴</span>
+      </div>
+      <div class="tab-item" data-tab="manual">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>手册</span>
+      </div>
       <div class="tab-fab" id="fabRecord">+</div>
-      <div class="tab-item" data-tab="data"><div class="icon">📊</div><div>数据</div></div>
-      <div class="tab-item" data-tab="settings"><div class="icon">⚙️</div><div>设置</div></div>
+      <div class="tab-item" data-tab="data">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>分析</span>
+      </div>
+      <div class="tab-item" data-tab="settings">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>设置</span>
+      </div>
+    </div>
+
+    <!-- 侧边浮动按钮：返回顶部 / 刷新 -->
+    <div class="side-float">
+      <button class="side-btn" onclick="goToday();updateTimeLoop()" title="刷新" aria-label="刷新">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      </button>
+      <button class="side-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="回到顶部" aria-label="回到顶部">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+      </button>
     </div>
 
     <!-- 宝宝信息编辑弹层 -->
@@ -2940,7 +3008,7 @@ function dismissInstallGuide(){
     if (!trainStart) { trainStart = localDateStr(today); localStorage.setItem('trainStartDate', trainStart); }
     const startDate = parseLocalDate(trainStart);
     const trainDay = Math.max(1, Math.floor((today - startDate) / 86400000) + 1);
-    document.getElementById('timelineDayTag').innerHTML = '训练 <strong>第 ' + trainDay + '</strong> 天';
+    document.getElementById('tlTrainDay').textContent = '训练 Day ' + trainDay;
     // 间接安抚法·夜间安抚间隔递增表（PDF：Day1 3/5/7 → Day8+ 25/30/30，单位分钟）
     // 注意：这是「夜间安抚进入间隔」，与下文「清醒间隔(wake window)」是两回事，不可混用
     const comfortIntervals = [[3,5,7],[5,7,9],[7,9,12],[9,12,15],[12,15,18],[15,18,20],[18,20,25],[25,30,30]];
@@ -2948,9 +3016,20 @@ function dismissInstallGuide(){
     const ivEl = document.getElementById('trainIntervalDisplay');
     if (ivEl) ivEl.textContent = '第' + trainDay + '天 · 安抚 ' + cTable[0] + '/' + cTable[1] + '/' + cTable[2] + ' 分钟';
     // 日期头（含时间）
-    document.getElementById('timelineDate').textContent =
-      new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}) + ' · ' +
-      (selectedDate.getMonth()+1) + '月' + selectedDate.getDate() + '日 周' + ['日','一','二','三','四','五','六'][selectedDate.getDay()];
+    // 顶部时间栏
+    const nowDate = new Date();
+    const elTime = document.getElementById('tlTimeNow');
+    const elDate = document.getElementById('tlDateSm');
+    if (elTime) elTime.textContent = nowDate.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+    if (elDate) elDate.textContent = (selectedDate.getMonth()+1) + '月' + selectedDate.getDate() + '日 周' + ['日','一','二','三','四','五','六'][selectedDate.getDay()];
+    const elTrain = document.getElementById('tlTrainDay');
+    if (elTrain) {
+      const trainStart = localStorage.getItem('trainStartDate') || localStorage.getItem('babyBirth') || '';
+      const startDate = trainStart ? parseLocalDate(trainStart) : selectedDate;
+      const dayDiff = Math.max(1, Math.floor((selectedDate.getTime() - startDate.getTime()) / 86400000) + 1);
+      const totalDays = parseInt(localStorage.getItem('trainDays') || '14') || 14;
+      elTrain.textContent = '训练 Day ' + Math.min(dayDiff, totalDays);
+    }
     const todayEvents = eventsOnDate(selectedDate);
     const cryEvents = todayEvents.filter(e => e.type === 'cry');
     const feedEvents = todayEvents.filter(e => e.type === 'feed_start');
@@ -3122,6 +3201,18 @@ function dismissInstallGuide(){
   function renderDateCarousel(prepend) {
     const container = document.getElementById('dateCarousel');
     const today = new Date();
+    // 滑块起始：训练开始日期（fallback 到30天前）
+    const trainStartStr = localStorage.getItem('trainStartDate') || '';
+    const trainStart = trainStartStr ? parseLocalDate(trainStartStr) : new Date(today.getTime() - 30*86400000);
+    const totalDays = parseInt(localStorage.getItem('trainDays') || '14') || 14;
+    const trainEnd = new Date(trainStart.getTime() + (totalDays - 1) * 86400000);
+
+    // 动态扩展范围（确保覆盖训练周期 + today）
+    const start = new Date(Math.min(trainStart.getTime(), today.getTime() - 3*86400000));
+    const end = new Date(Math.max(trainEnd.getTime(), today.getTime() + 3*86400000));
+    dateRangeStart = Math.floor((start.getTime() - today.getTime()) / 86400000);
+    dateRangeEnd = Math.floor((end.getTime() - today.getTime()) / 86400000);
+
     const days = [];
     let prevMonth = -1;
     for (let i = dateRangeStart; i <= dateRangeEnd; i++) {
@@ -3129,36 +3220,41 @@ function dismissInstallGuide(){
       const dd = String(d.getDate()).padStart(2, '0');
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const ww = ['日','一','二','三','四','五','六'][d.getDay()];
-      const isToday = i === 0;
+      const isToday = d.toDateString() === today.toDateString();
       const isSelected = d.toDateString() === selectedDate.toDateString();
+      const isTrainDay = d.getTime() >= trainStart.getTime() && d.getTime() <= trainEnd.getTime();
       const hasData = events.some(e => new Date(e.ts).toDateString() === d.toDateString());
-      // 跨月分界
       if (d.getMonth() !== prevMonth) {
         days.push({ kind: 'month', label: (d.getMonth() + 1) + '月' });
         prevMonth = d.getMonth();
       }
-      days.push({ kind: 'day', date: mm + '-' + dd, weekday: ww, hasData, active: isSelected, isToday, ts: d.getTime() });
+      days.push({ kind: 'day', date: mm + '-' + dd, weekday: ww, hasData, active: isSelected, isToday, ts: d.getTime(), isTrainDay });
     }
+
     container.innerHTML = days.map(d => {
       if (d.kind === 'month') return '<div class="date-month-divider">' + d.label + '</div>';
-      return `
-        <div class="date-item ${d.active ? 'active' : ''} ${d.isToday && !d.active ? 'today' : ''}"
-             onclick="selectDate(new Date(${d.ts}))">
-          <div class="weekday">${d.weekday}</div>
-          <div class="day">${d.date.split('-')[1]}</div>
-          ${d.hasData ? '<div class="dot-indicator"></div>' : ''}
-        </div>
-      `;
+      const cls = d.active ? 'active' : (d.isToday ? 'today' : (d.isTrainDay ? '' : 'out-range'));
+      return '<div class="date-item ' + cls + '" onclick="selectDate(new Date(' + d.ts + '))"><div class="weekday">' + d.weekday + '</div><div class="day">' + d.date.split('-')[1] + '</div>' + (d.hasData ? '<div class="dot-indicator"></div>' : '') + '</div>';
     }).join('');
 
-    // 确保首次渲染定位到当天（DOM 可能未完成 layout）
+    // 当前日期超过可见范围一半时自动居中
     const activeEl = container.querySelector('.date-item.active');
     if (activeEl && !prepend) {
       requestAnimationFrame(() => {
-        activeEl.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
+        const cw = container.clientWidth;
+        const off = activeEl.offsetLeft - cw/2 + activeEl.offsetWidth/2;
+        if (off > 0) container.scrollTo({ left: off, behavior: 'instant' });
       });
     }
   }
+
+  // 实时钟（每分钟刷新）
+  function updateTimeLoop() {
+    const el = document.getElementById('tlTimeNow');
+    if (el) el.textContent = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+  }
+  setInterval(updateTimeLoop, 30000);
+  updateTimeLoop();
 
   // 无限滚动：监听横向滚动，接近边界时扩展
   function setupDateCarouselInfiniteScroll() {
