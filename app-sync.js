@@ -228,20 +228,31 @@
     syncTimer = setTimeout(() => syncNow(), 400);
   }
 
-  // 轮询（替代 realtime，3 秒一次）
+  // 轮询（替代 realtime，3 秒一次；页面不可见时暂停）
   function startPolling() {
     stopPolling();
-    pollTimer = setInterval(async () => {
-      if (!session || !babyId) return;
-      await refreshActivityState();
-      const list = app?.getEvents?.() || [];
-      if (list.length) for (const ev of list) await pushEventToCloud(ev);
-      const now = Date.now();
-      const remote = await loadEventsFromCloud(now - 30 * 86400 * 1000, now + 86400 * 1000);
-      if (remote && app?.replaceEvents) app.replaceEvents(remote);
-    }, 3000);
+    pollTimer = setInterval(runPoll, 3000);
   }
   function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+  async function runPoll() {
+    if (!session || !babyId || syncing) return;
+    await refreshActivityState();
+    const list = app?.getEvents?.() || [];
+    if (list.length) for (const ev of list) await pushEventToCloud(ev);
+    const now = Date.now();
+    const remote = await loadEventsFromCloud(now - 30 * 86400 * 1000, now + 86400 * 1000);
+    if (remote && app?.replaceEvents) app.replaceEvents(remote);
+  }
+
+  // 页面不可见时暂停轮询；恢复时立即同步
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopPolling();
+    } else if (session) {
+      startPolling();
+      syncNow();
+    }
+  });
 
   // 认证
   async function login(babyIdInput, password) {
@@ -252,13 +263,12 @@
       const row = Array.isArray(r) ? r[0] : r;
       session = { token: row.token, household_id: row.household_id, family_name: row.family_name, baby_name: row.baby_name, baby_id: row.baby_id, display_name: row.display_name || '家庭成员', identity_local: 'editor' };
       localStorage.setItem(LS_TOKEN, session.token);
-      // 取宝宝 uuid
-      await fetchBabyId();
+      // 通过 auth_get_session 获取宝宝 uuid（不走直接 REST，避免 revoke 权限阻断）
+      await resolveBabyId();
       refreshAccountUI();
       notify('登录成功');
       startPolling();
       app?.afterLogin?.();
-      // 检查是否需要首次身份选择
       checkFirstTimeIdentity();
     } catch (e) {
       notify('登录失败：' + e.message);
@@ -273,7 +283,7 @@
       const row = Array.isArray(r) ? r[0] : r;
       session = { token: row.token, household_id: row.household_id, family_name: row.family_name, baby_name: row.baby_name, baby_id: row.baby_id, display_name: '家庭成员', identity_local: 'editor' };
       localStorage.setItem(LS_TOKEN, session.token);
-      await fetchBabyId();
+      await resolveBabyId();
       refreshAccountUI();
       notify('家庭已创建');
       startPolling();
@@ -284,14 +294,14 @@
     }
   }
 
-  async function fetchBabyId() {
+  // 通过 auth_get_session RPC 取 baby_uuid（回避直接 REST 查表的 revoke 问题）
+  async function resolveBabyId() {
     if (!session) return;
     try {
-      const headers = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'X-App-Token': session.token };
-      const res = await fetch(API + '/rest/v1/babies?household_id=eq.' + session.household_id + '&select=id&limit=1', { headers });
-      const arr = await res.json();
-      if (arr && arr[0]) babyId = arr[0].id;
-    } catch (e) { console.warn('[fetchBabyId] failed', e); }
+      const r = await rpc('auth_get_session', {}, true);
+      const row = Array.isArray(r) ? r[0] : r;
+      if (row && row.baby_uuid) babyId = row.baby_uuid;
+    } catch (e) { console.warn('[resolveBabyId] failed', e); }
   }
 
   async function restoreSession() {
@@ -309,7 +319,7 @@
       // 同步本机的 display_name / identity_local
       if (!localStorage.getItem(LS_DISPLAY)) localStorage.setItem(LS_DISPLAY, session.display_name);
       if (!localStorage.getItem(LS_IDENTITY)) localStorage.setItem(LS_IDENTITY, session.identity_local);
-      await fetchBabyId();
+      await resolveBabyId();
       refreshAccountUI();
       // 云端为主：启动时立即拉取云端事件替换本地缓存
       const now = Date.now();
